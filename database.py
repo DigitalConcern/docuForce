@@ -8,7 +8,8 @@ class ActiveUsers(Model):
     user_id = fields.IntField(pk=True)
     login = fields.TextField()
     password = fields.TextField()
-    organization = fields.IntField()
+    organization = fields.UUIDField(null=True)
+    # refresh_token = fields.TextField()
 
     class Meta:
         table = "users"

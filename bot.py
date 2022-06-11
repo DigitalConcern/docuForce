@@ -11,6 +11,9 @@ class MyBot:
     dp = Dispatcher(bot, storage=storage)
     registry = DialogRegistry(dp)
 
+    access_token = ""
+    refresh_token = ""
+
     @classmethod
     async def run_bot(cls):
         logging.basicConfig(level=logging.INFO)
