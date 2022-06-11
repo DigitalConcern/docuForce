@@ -18,10 +18,7 @@ class MyBot:
 
     @classmethod
     def register_handler(cls, **kwargs):
-        try:
-            cls.dp.register_message_handler(kwargs["method"], commands=kwargs["commands"])
-        except:
-            cls.dp.register_message_handler(kwargs["method"], text=kwargs["text"])
+        cls.dp.register_message_handler(kwargs["method"], commands=kwargs["commands"])
 
     @classmethod
     def register_dialogs(cls, *args):
