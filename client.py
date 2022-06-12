@@ -1,4 +1,5 @@
 import requests
+import datetime
 
 
 async def sign_in(p_login, p_password) -> (str, str):
@@ -51,9 +52,87 @@ async def get_orgs_dict(p_access, p_refresh) -> dict:
         else:
             orgs = response.json()["orgs"]
             result = {}
-            ctr = 1
+            ctr = 0
             for org in orgs:
                 result[f"{ctr}"] = (org["name"], org["oguid"])
                 ctr += 1
             return result
 
+
+async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
+    headers = {"Access-Token": f"{p_access}"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/flows/tasks"
+    # print(response.status_code, response.json(), sep='\n')
+    params = {'showMode': "NEED_TO_ACTION",
+              'isCompleted': "false"}
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            await get_access(p_refresh)
+        else:
+            tasks = response.json()
+            result = {}
+            ctr = 0
+            for task in tasks:
+                try:
+                    cost = "Сумма: " + str(
+                        task["document"]["fields"]["sum"] + " " + task["document"]["fields"]["currency"]) + "\n"
+                except:
+                    cost = ""
+                try:
+                    org_short_name = task["document"]["fields"]["nameShort"] + "\n"
+                except:
+                    org_short_name = ""
+                try:
+                    data = " От " + datetime.datetime.fromtimestamp(
+                        task["document"]["documentTimestamp"] / 1e3).strftime("%d.%m.%Y") + "\n"
+                except:
+                    data = ""
+                try:
+                    doc_index = task["document"]["indexKey"]
+                    if data == "":
+                        doc_index += "\n"
+                except:
+                    doc_index = ""
+
+                result[f"{ctr}"] = (cost,
+                                    org_short_name,
+                                    data,
+                                    task["document"]["documentId"],
+                                    doc_index,
+                                    )  # Найти какие данные нужно вытащить из тасков
+                ctr += 1
+            return result
+
+
+async def get_doc_dict(p_access, p_refresh, org_code, doc_code) -> dict:
+    headers = {"Access-Token": f"{p_access}"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/documents/{doc_code}"
+    while True:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            await get_access(p_refresh)
+        else:
+            docks = response.json()
+            result = {}
+            ctr = 0
+            for dock in docks:
+                try:
+                    cost = str(dock["fields"]["sum"] + dock["document"]["fields"]["currency"]) + "\n"
+                except:
+                    cost = None
+                try:
+                    org_short_name = dock["proxyOrg"]["nameShort"] + "\n"
+                except:
+                    org_short_name = None
+                result[f"{ctr}"] = (cost,
+                                    org_short_name,
+                                    datetime.datetime.fromtimestamp(
+                                        dock["documentTimestamp"] / 1e3).strftime("%d.%m.%Y"),
+
+                                    dock["indexKey"],
+                                    )  # Найти какие данные нужно вытащить
+                ctr += 1
+            return result
