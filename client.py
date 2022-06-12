@@ -76,30 +76,29 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
             ctr = 0
             for task in tasks:
                 try:
-                    cost = "Сумма: " + str(
-                        task["document"]["fields"]["sum"] + " " + task["document"]["fields"]["currency"]) + "\n"
+                    cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(task["document"]["fields"]["currency"]) + "\n "
                 except:
                     cost = ""
                 try:
-                    org_short_name = task["document"]["fields"]["nameShort"] + "\n"
+                    org__name = task["document"]["proxyOrg"] + "\n"
                 except:
-                    org_short_name = ""
+                    org__name = ""
                 try:
                     data = " От " + datetime.datetime.fromtimestamp(
                         task["document"]["documentTimestamp"] / 1e3).strftime("%d.%m.%Y") + "\n"
                 except:
                     data = ""
                 try:
-                    doc_index = task["document"]["indexKey"]
+                    doc_index = "№" + str(task["document"]["indexKey"])
                     if data == "":
                         doc_index += "\n"
                 except:
                     doc_index = ""
 
                 result[f"{ctr}"] = (cost,
-                                    org_short_name,
+                                    org__name,
                                     data,
-                                    task["document"]["documentId"],
+                                    task["document"]["oguid"],
                                     doc_index,
                                     )  # Найти какие данные нужно вытащить из тасков
                 ctr += 1

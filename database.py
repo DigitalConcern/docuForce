@@ -11,6 +11,7 @@ class ActiveUsers(Model):
     organization = fields.UUIDField(null=True)
     refresh_token = fields.TextField()
     access_token = fields.TextField()
+    current_document_id = fields.TextField(null=True)
 
     class Meta:
         table = "users"
