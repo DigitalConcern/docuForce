@@ -76,11 +76,12 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
             ctr = 0
             for task in tasks:
                 try:
-                    cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(task["document"]["fields"]["currency"]) + "\n "
+                    cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                        task["document"]["fields"]["currency"]) + "\n "
                 except:
                     cost = ""
                 try:
-                    org__name = task["document"]["proxyOrg"] + "\n"
+                    org__name = task["document"]["contractor"] + "\n"
                 except:
                     org__name = ""
                 try:
@@ -107,31 +108,13 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
 
 async def get_doc_dict(p_access, p_refresh, org_code, doc_code) -> dict:
     headers = {"Access-Token": f"{p_access}"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/documents/{doc_code}"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/{doc_code}/page/{1}"
     while True:
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
             await get_access(p_refresh)
         else:
-            docks = response.json()
-            result = {}
-            ctr = 0
-            for dock in docks:
-                try:
-                    cost = str(dock["fields"]["sum"] + dock["document"]["fields"]["currency"]) + "\n"
-                except:
-                    cost = None
-                try:
-                    org_short_name = dock["proxyOrg"]["nameShort"] + "\n"
-                except:
-                    org_short_name = None
-                result[f"{ctr}"] = (cost,
-                                    org_short_name,
-                                    datetime.datetime.fromtimestamp(
-                                        dock["documentTimestamp"] / 1e3).strftime("%d.%m.%Y"),
+            dock = response
 
-                                    dock["indexKey"],
-                                    )  # Найти какие данные нужно вытащить
-                ctr += 1
-            return result
+        return dock

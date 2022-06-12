@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from client import get_orgs_dict, get_tasks_dict
 from database import ActiveUsers
 from bot import MyBot
-
+from dialogs.view_doc_dialog import ViewDocSG
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(
@@ -28,11 +28,6 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     if len(text) == 1:
         dialog_manager.current_context().dialog_data["is_first"] = False
 
-    # orgs_list = "Выберите организацию\n\n"
-    # for key in orgs_dict.keys():
-    #     orgs_list += f'{key}. {orgs_dict[key][0]}\n'
-    # dialog_manager.current_context().dialog_data["organization_dict"] = orgs_dict
-    # dialog_manager.current_context().dialog_data["organization_list"] = orgs_list
     dialog_manager.current_context().dialog_data["text"] = text
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 0)
@@ -76,6 +71,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
+    await dialog_manager.start(ViewDocSG.choose_action)
 
 
 class TasksSG(StatesGroup):
