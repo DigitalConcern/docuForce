@@ -9,7 +9,8 @@ class ActiveUsers(Model):
     login = fields.TextField()
     password = fields.TextField()
     organization = fields.UUIDField(null=True)
-    # refresh_token = fields.TextField()
+    refresh_token = fields.TextField()
+    access_token = fields.TextField()
 
     class Meta:
         table = "users"

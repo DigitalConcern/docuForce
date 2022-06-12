@@ -10,7 +10,8 @@ from aiogram_dialog.widgets.text import Const, Format
 from client import sign_in
 from bot import MyBot
 from database import ActiveUsers
-from org_dialog import OrgSG
+from .org_dialog import OrgSG, org_dialog
+from .menu_dialog import MenuSG, menu_dialog
 
 
 class AuthSG(StatesGroup):
@@ -23,9 +24,8 @@ async def start(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
-    # else:
-    #     Если он есть то переходим в меню
-    #     await dialog_manager.start(docsSG.menu, mode=StartMode.RESET_STACK)
+    else:
+        await dialog_manager.start(MenuSG.choose_action)
 
 
 MyBot.register_handler(method=start, commands="start", state="*")
@@ -42,14 +42,13 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
     resp = await sign_in(dialog_manager.current_context().dialog_data["login"],
                          dialog_manager.current_context().dialog_data["password"])
 
-    MyBot.access_token = resp[0]
-    MyBot.refresh_token = resp[1]
-
     if resp:
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
         await ActiveUsers(user_id=dialog_manager.current_context().dialog_data["id"],
                           login=dialog_manager.current_context().dialog_data["login"],
                           password=dialog_manager.current_context().dialog_data["password"],
+                          refresh_token=resp[1],
+                          access_token=resp[0]
                           ).save()
         await dialog_manager.done()
         await dialog_manager.start(OrgSG.choose_org)
@@ -71,5 +70,3 @@ auth_dialog = Dialog(
     ),
     launch_mode=LaunchMode.ROOT
 )
-
-MyBot.register_dialogs(auth_dialog)
