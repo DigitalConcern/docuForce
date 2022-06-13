@@ -22,7 +22,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     text = []
     doc_ids = []
     for task in tasks_dict.keys():
-        micro_text = f"{tasks_dict[task][1]}✍🏻Тип документа {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}"
+        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
     if len(text) == 1:
@@ -31,8 +31,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["text"] = text
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 0)
-    dialog_manager.current_context().dialog_data["current_doc"] = dialog_manager.current_context().dialog_data.get(
-        "current_doc", doc_ids[0])
+    # dialog_manager.current_context().dialog_data["current_doc"] = dialog_manager.current_context().dialog_data.get("current_doc", doc_ids[0])
+    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
     current_page = text[0]
     return {
         'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
@@ -68,6 +68,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
 
 
+
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
@@ -92,7 +93,7 @@ tasks_dialog = Dialog(Window(
                on_click=switch_pages),
 
     ),
-    Button(Format("Просмотр документа{current_page}"),
+    Button(Format("Просмотр документа\n{current_page}"),
            id="doc",
            on_click=go_to_doc),
     state=TasksSG.choose_action,

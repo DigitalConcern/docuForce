@@ -1,3 +1,5 @@
+from typing import Dict
+
 import requests
 import datetime
 
@@ -62,6 +64,7 @@ async def get_orgs_dict(p_access, p_refresh) -> dict:
 async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
     headers = {"Access-Token": f"{p_access}"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/flows/tasks"
+
     # print(response.status_code, response.json(), sep='\n')
     params = {'showMode': "NEED_TO_ACTION",
               'isCompleted': "false"}
@@ -81,32 +84,38 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
                 except:
                     cost = ""
                 try:
-                    org__name = task["document"]["contractor"] + "\n"
+                    org__name = task["document"]["fields"]["contractor"] + "\n"
                 except:
                     org__name = ""
                 try:
                     data = " От " + datetime.datetime.fromtimestamp(
-                        task["document"]["documentTimestamp"] / 1e3).strftime("%d.%m.%Y") + "\n"
+                        task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
                 except:
                     data = ""
                 try:
-                    doc_index = "№" + str(task["document"]["indexKey"])
+                    doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
                     if data == "":
                         doc_index += "\n"
                 except:
                     doc_index = ""
-
+                try:
+                    doc_key = str(task["document"]["type"])
+                    metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/documentTypes/{doc_key}'
+                    meta_response = requests.get(metaurl, headers=headers)
+                    doc_name = meta_response.json()["titles"]["ru"]
+                except:
+                    doc_name = ""
                 result[f"{ctr}"] = (cost,
                                     org__name,
                                     data,
                                     task["document"]["oguid"],
-                                    doc_index,
+                                    doc_index, doc_name
                                     )  # Найти какие данные нужно вытащить из тасков
                 ctr += 1
             return result
 
 
-async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page) -> str:
+async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
     headers = {"Access-Token": f"{p_access}"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/{doc_code}/page/{page}"
     while True:

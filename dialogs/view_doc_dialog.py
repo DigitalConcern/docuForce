@@ -44,11 +44,13 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
         'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
         'len': dialog_manager.current_context().dialog_data["len"],
+        'is_not_one': dialog_manager.current_context().dialog_data["len"] != 1,
         'counter': dialog_manager.current_context().dialog_data["counter"]
     }
 
 
 async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    os.remove((await get_data(dialog_manager=dialog_manager))["filename"])
     match button.widget_id:
         case "plus":
             dialog_manager.current_context().dialog_data["counter"] += 1
@@ -71,10 +73,10 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             dialog_manager.current_context().dialog_data["is_not_last"] = True
             dialog_manager.current_context().dialog_data["is_not_first"] = False
         case "fin":
-            dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data["len"]
+            dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
+                "len"]
             dialog_manager.current_context().dialog_data["is_not_last"] = False
             dialog_manager.current_context().dialog_data["is_not_first"] = True
-
 
 
 view_doc_dialog = Dialog(
@@ -93,6 +95,7 @@ view_doc_dialog = Dialog(
                    id="minus",
                    on_click=switch_pages),
             Button(Format("{counter}"),
+                    when="is_not_one",
                    id="curr"),
             Button(Format(">>"),
                    id="plus",
