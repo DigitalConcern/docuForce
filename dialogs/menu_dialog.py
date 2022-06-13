@@ -24,7 +24,7 @@ menu_dialog = Dialog(
     Window(
         StaticMedia(
              path="resources/logo.png",
-            type=ContentType.PHOTO
+             type=ContentType.PHOTO
         ),
         Start(Const("Мои задачи"), id="tasks", state=TasksSG.choose_action),
         Start(Const("Поиск документа"), id="search", state=SearchSG.choose_action),

@@ -54,7 +54,7 @@ async def get_orgs_dict(p_access, p_refresh) -> dict:
         else:
             orgs = response.json()["orgs"]
             result = {}
-            ctr = 0
+            ctr = 1
             for org in orgs:
                 result[f"{ctr}"] = (org["name"], org["oguid"])
                 ctr += 1

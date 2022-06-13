@@ -12,6 +12,7 @@ from database import ActiveUsers
 from bot import MyBot
 from dialogs.view_doc_dialog import ViewDocSG
 
+
 async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
@@ -66,7 +67,6 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             if dialog_manager.current_context().dialog_data["counter"] < len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
-
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):

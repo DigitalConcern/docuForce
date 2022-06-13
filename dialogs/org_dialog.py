@@ -18,7 +18,6 @@ from .menu_dialog import MenuSG
 
 class OrgSG(StatesGroup):
     choose_org = State()
-    finish = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
