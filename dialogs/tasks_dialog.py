@@ -92,7 +92,7 @@ tasks_dialog = Dialog(Window(
                on_click=switch_pages),
 
     ),
-    Button(Format("Просмотр документа"),
+    Button(Format("Просмотр документа{current_page}"),
            id="doc",
            on_click=go_to_doc),
     state=TasksSG.choose_action,

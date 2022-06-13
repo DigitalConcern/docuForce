@@ -106,15 +106,12 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
             return result
 
 
-async def get_doc_dict(p_access, p_refresh, org_code, doc_code) -> dict:
+async def get_doc_dict(p_access, p_refresh, org_code, doc_code,page) -> str:
     headers = {"Access-Token": f"{p_access}"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/{doc_code}/page/{1}"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/{doc_code}/page/{page}"
     while True:
         response = requests.get(url, headers=headers)
-
         if response.status_code != 200:
             await get_access(p_refresh)
         else:
-            dock = response
-
-        return dock
+            return response.text

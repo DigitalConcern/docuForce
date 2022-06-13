@@ -16,6 +16,7 @@ class ViewDocSG(StatesGroup):
     choose_action = State()
 
 
+
 async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
@@ -23,22 +24,25 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                         "organization"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
 
-    orgs_dict = await get_doc_dict(access_token, refresh_token, organization, current_document_id)
-    orgs_list = "Выберите организацию\n\n"
-    for key in orgs_dict.keys():
-        orgs_list += f'{key}. {orgs_dict[key][0]}\n'
-    dialog_manager.current_context().dialog_data["organization_dict"] = orgs_dict
-    # dialog_manager.current_context().dialog_data["organization_list"] = orgs_list
+    doc_bytes = await get_doc_dict(access_token, refresh_token, organization, current_document_id, 1)
+    import base64
+    imgdata = base64.b64decode(doc_bytes)
+    filename = f'{current_document_id}.jpg'
+    with open(filename, 'wb') as f:
+        f.write(imgdata)
+    f.close()
 
     return {
-        'organization_keys': orgs_dict.keys(),
-        'organization_list': dialog_manager.current_context().dialog_data.get("organization_list", orgs_list)
+        'filename': filename
     }
 
 
 view_doc_dialog = Dialog(
     Window(
-        Format("ass"),
+        StaticMedia(
+            path="{filename}",
+            type=ContentType.PHOTO
+        ),
         state=ViewDocSG.choose_action,
         getter=get_data
     ),
