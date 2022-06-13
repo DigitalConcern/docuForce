@@ -23,25 +23,59 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                         "current_document_id",
                                                                                         "organization"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
-
-    doc_bytes = await get_doc_dict(access_token, refresh_token, organization, current_document_id, 1)
+    dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get("counter", 1)
+    doc = await get_doc_dict(access_token, refresh_token, organization, current_document_id, dialog_manager.current_context().dialog_data["counter"])
     import base64
-    imgdata = base64.b64decode(doc_bytes)
+    imgdata = base64.b64decode(doc["image_bin"])
     filename = f'{current_document_id}.jpg'
     with open(filename, 'wb') as f:
         f.write(imgdata)
     f.close()
+    dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
 
+    if dialog_manager.current_context().dialog_data["len"]  == 1:
+        dialog_manager.current_context().dialog_data["is_not_last"] = False
     return {
-        'filename': filename
+        'filename': filename,
+        'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
+        'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
     }
 
+
+
+async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    match button.widget_id:
+        case "plus":
+            dialog_manager.current_context().dialog_data["counter"] += 1
+            if dialog_manager.current_context().dialog_data["counter"]+1 == dialog_manager.current_context().dialog_data["len"]:
+                dialog_manager.current_context().dialog_data["is_not_last"] = False
+
+            if dialog_manager.current_context().dialog_data["counter"] > 1: dialog_manager.current_context().dialog_data["is_not_first"] = True
+        case "minus":
+            dialog_manager.current_context().dialog_data["counter"] -= 1
+
+            if dialog_manager.current_context().dialog_data["counter"] == 1:
+                dialog_manager.current_context().dialog_data["is_not_first"] = False
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data["len"]:
+                dialog_manager.current_context().dialog_data["is_not_last"] = True
 
 view_doc_dialog = Dialog(
     Window(
         StaticMedia(
             path="{filename}",
             type=ContentType.PHOTO
+        ),
+        Row(
+
+            Button(Format("<<"),
+                   when="is_not_first",
+                   id="minus",
+                   on_click=switch_pages),
+            Button(Format(">>"),
+                   id="plus",
+                   when="is_not_last",
+                   on_click=switch_pages),
+
         ),
         state=ViewDocSG.choose_action,
         getter=get_data
