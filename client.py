@@ -3,6 +3,8 @@ from typing import Dict
 import requests
 import datetime
 
+from bot import MyBot
+
 
 async def sign_in(p_login, p_password) -> (str, str):
     headers = {'content-type': 'application/json'}
@@ -137,6 +139,7 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
         doc_task_type = ""
 
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/routes/flowStageTypes"
+    headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
     type_response = requests.get(task_type_url, headers=headers)
     while type_response.status_code != 200:
         await get_access(p_refresh)
@@ -150,3 +153,19 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
             "image_bin": binary_img,
             "task_id": doc_task_id,
             "task_type": doc_task_name}
+
+
+async def post_doc_action(p_access, p_refresh, org_id, task_id, action, user_id):
+    headers = {"Access-Token": f"{p_access}",'content-type': 'application/json'}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/complete"
+    # print(response.status_code, response.json(), sep='\n')
+    action_response = requests.post(url, headers=headers, json={"result": action})
+
+    while (action_response.status_code == 400) or (action_response.status_code == 500):
+        await get_access(p_refresh)
+        action_response = requests.post(url, headers=headers, json={"result": action})
+
+    if action_response.status_code == 409:
+        for error in action_response.json():
+            MyBot.bot.send_message(user_id, error["errorMessage"])
+    print(action_response)

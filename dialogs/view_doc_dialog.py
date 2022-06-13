@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 import os
 
 from bot import MyBot
-from client import get_doc_dict
+from client import get_doc_dict, post_doc_action
 from database import ActiveUsers
 
 
@@ -97,12 +97,20 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 
 
 async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    data = list(
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
+                                                                                        "organization"))[0]
+    refresh_token, access_token, organization = data[0], data[1], data[2]
+
     match button.widget_id:
         case "yes":
-            pass
+            data = "SOLVED"
         case "no":
-            pass
+            data = "DECLINED"
+    await post_doc_action(access_token, refresh_token, organization,
+                          dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
+    await dialog_manager.done()
 
 view_doc_dialog = Dialog(
     Window(
