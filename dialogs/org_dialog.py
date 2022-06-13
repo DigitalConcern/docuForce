@@ -7,13 +7,12 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ParseMod
 from aiogram_dialog import ChatEvent, Dialog, DialogManager, Window, StartMode
 from aiogram_dialog.manager.protocols import LaunchMode, BaseDialogManager
 from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Start, Column, Select, Group
+from aiogram_dialog.widgets.kbd import Start, Column, Select, Group, Cancel
 from aiogram_dialog.widgets.text import Const, Format
 
 from bot import MyBot
 from client import get_orgs_dict
 from database import ActiveUsers
-from .menu_dialog import MenuSG
 
 
 class OrgSG(StatesGroup):
@@ -50,7 +49,7 @@ async def on_org_clicked(c: CallbackQuery, select: Select, dialog_manager: Dialo
     # ничего не меняют
 
     await MyBot.bot.send_message(c.from_user.id, f"Организация\n{org_name}\nуспешно выбрана!")
-    await dialog_manager.start(MenuSG.choose_action)
+    await dialog_manager.done()
 
 org_dialog = Dialog(
     Window(
@@ -62,6 +61,7 @@ org_dialog = Dialog(
             id="orgs",
             on_click=on_org_clicked
         ), width=4),
+        Cancel(Const("⏪ Назад")),
         state=OrgSG.choose_org,
         getter=get_data,
         parse_mode=ParseMode.HTML

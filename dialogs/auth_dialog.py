@@ -10,8 +10,8 @@ from aiogram_dialog.widgets.text import Const, Format
 from client import sign_in
 from bot import MyBot
 from database import ActiveUsers
-from .org_dialog import OrgSG, org_dialog
-from .menu_dialog import MenuSG, menu_dialog
+from .org_dialog import OrgSG
+from .menu_dialog import MenuSG
 
 
 class AuthSG(StatesGroup):
@@ -51,6 +51,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           access_token=resp[0]
                           ).save()
         await dialog_manager.done()
+        await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:
         await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль\nПопробуйте еще раз!", parse_mode="HTML")

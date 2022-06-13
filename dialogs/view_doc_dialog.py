@@ -95,7 +95,7 @@ view_doc_dialog = Dialog(
                    id="minus",
                    on_click=switch_pages),
             Button(Format("{counter}"),
-                    when="is_not_one",
+                   when="is_not_one",
                    id="curr"),
             Button(Format(">>"),
                    id="plus",
@@ -107,8 +107,9 @@ view_doc_dialog = Dialog(
                    on_click=switch_pages),
 
         ),
+        Cancel(Const("⏪ Назад")),
         state=ViewDocSG.choose_action,
         getter=get_data
     ),
-    launch_mode=LaunchMode.ROOT
+    launch_mode=LaunchMode.SINGLE_TOP
 )

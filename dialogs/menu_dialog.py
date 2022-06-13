@@ -29,9 +29,9 @@ menu_dialog = Dialog(
         Start(Const("Мои задачи"), id="tasks", state=TasksSG.choose_action),
         Start(Const("Поиск документа"), id="search", state=SearchSG.choose_action),
         Start(Const("Список документов"), id="list", state=ListSG.choose_action),
-        Start(Const("Настройки"), id="settings", state=SettingsSG.choose_action),
+        Start(Const("Настройки"), id="settings", state=SettingsSG.change_org),
         Start(Const("Сообщения"), id="messages", state=MessagesSG.choose_action),
         state=MenuSG.choose_action
     ),
-    # launch_mode=LaunchMode.ROOT
+    launch_mode=LaunchMode.ROOT
 )

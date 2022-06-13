@@ -32,8 +32,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["text"] = text
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 0)
-    # dialog_manager.current_context().dialog_data["current_doc"] = dialog_manager.current_context().dialog_data.get("current_doc", doc_ids[0])
-    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
+
+    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[
+        dialog_manager.current_context().dialog_data["counter"]]
     current_page = text[0]
     return {
         'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
@@ -51,7 +52,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"]+1 == len(
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
@@ -79,25 +80,29 @@ class TasksSG(StatesGroup):
     choose_action = State()
 
 
-tasks_dialog = Dialog(Window(
-    Format('{current_page}'),
-    Row(
+tasks_dialog = Dialog(
+    Window(
+        Format('{current_page}'),
+        Button(
+            Format("Просмотр документа"),
+            id="doc",
+            on_click=go_to_doc
+        ),
+        Row(
 
-        Button(Format("<<"),
-               when="is_not_first",
-               id="minus",
-               on_click=switch_pages),
-        Button(Format(">>"),
-               id="plus",
-               when="is_not_last",
-               on_click=switch_pages),
+            Button(Format("<<"),
+                   when="is_not_first",
+                   id="minus",
+                   on_click=switch_pages),
+            Button(Format(">>"),
+                   id="plus",
+                   when="is_not_last",
+                   on_click=switch_pages),
 
+        ),
+        Cancel(Const("⏪ Назад")),
+        state=TasksSG.choose_action,
+        getter=get_data
     ),
-    Button(Format("Просмотр документа\n{current_page}"),
-           id="doc",
-           on_click=go_to_doc),
-    state=TasksSG.choose_action,
-    getter=get_data
-),
     launch_mode=LaunchMode.SINGLE_TOP
 )

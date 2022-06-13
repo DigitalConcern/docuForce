@@ -8,7 +8,7 @@ from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Star
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format
 
-from org_dialog import OrgSG
+from .org_dialog import OrgSG
 
 
 class SettingsSG(StatesGroup):
@@ -24,6 +24,7 @@ settings_dialog = Dialog(
         ),
         Start(Const("Сменить организацию"), id="change_org", state=OrgSG.choose_org),
         SwitchTo(Const("Уведомления"), id="notifics", state=SettingsSG.notifics),
+        Cancel(Const("⏪ Назад")),
         state=SettingsSG.change_org
     ),
     launch_mode=LaunchMode.SINGLE_TOP
