@@ -134,9 +134,11 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
     try:
         doc_task_id = doc_response_json["tasks"][0]["oguid"]
         doc_task_type = doc_response_json["tasks"][0]["type"]
+        doc_task_type_service = doc_response_json["tasks"][0]["taskType"]
     except:
         doc_task_id = ""
         doc_task_type = ""
+        doc_task_type_service=""
 
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/routes/flowStageTypes"
     headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
@@ -152,7 +154,8 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
     return {"len": len,
             "image_bin": binary_img,
             "task_id": doc_task_id,
-            "task_type": doc_task_name}
+            "task_type": doc_task_name,
+            "task_type_service": doc_task_type_service}
 
 
 async def post_doc_action(p_access, p_refresh, org_id, task_id, action, user_id):
