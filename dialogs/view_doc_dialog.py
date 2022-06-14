@@ -52,6 +52,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["is_task"] = True
         dialog_manager.current_context().dialog_data["yes_name"] = doc["task_type"]
         dialog_manager.current_context().dialog_data["task_id"] = doc["task_id"]
+        dialog_manager.current_context().dialog_data["task_type_service"] = doc["task_type_service"]
 
         # await MyBot.bot.send_photo(dialog_manager.event.from_user.id,imgdata)
     return {
