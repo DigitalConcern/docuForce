@@ -248,8 +248,52 @@ async def post_doc_sign(p_access, p_refresh, org_id, user_id, att_doc_id, doc_id
 
     add_sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
     add_sign_data = {"oguid": action_response.text[1:-1],
-            "comment": ""}
+                     "comment": ""}
     add_sign_response = requests.post(add_sign_url, headers=headers, json=add_sign_data)
 
     print(add_sign_response)
     return "SUCCESS"
+
+
+async def get_doc_list(p_access, p_refresh, org_id):
+    headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json'}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
+
+    response = requests.get(url, headers=headers)
+    while response.status_code != 200:
+        await get_access(p_refresh)
+        response = requests.get(url, headers=headers)
+
+    result = []
+    resp_list = response.json()
+    for resp in resp_list:
+        try:
+            cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
+                resp["fields"]["currency"]) + "\n "
+        except:
+            cost = ""
+        try:
+            org__name = resp["fields"]["contractor"] + "\n"
+        except:
+            org__name = ""
+        try:
+            data = " От " + datetime.datetime.fromtimestamp(
+                resp["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
+        except:
+            data = ""
+        try:
+            doc_index = "№" + str(resp["fields"]["documentNumber"])
+            if data == "":
+                doc_index += "\n"
+        except:
+            doc_index = ""
+        try:
+            doc_key = str(resp["type"])
+            metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
+            meta_response = requests.get(metaurl, headers=headers)
+            doc_name = meta_response.json()["titles"]["ru"]
+        except:
+            doc_name = ""
+        result.append((cost, org__name, data, doc_index, doc_name))
+
+    return result

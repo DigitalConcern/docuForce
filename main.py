@@ -7,6 +7,7 @@ from dialogs.menu_dialog import menu_dialog
 from dialogs.tasks_dialog import tasks_dialog
 from dialogs.view_doc_dialog import view_doc_dialog
 from dialogs.settings_dialog import settings_dialog
+from dialogs.list_doc_dialog import list_doc_dialog
 
 
 async def main():
@@ -16,6 +17,7 @@ async def main():
     MyBot.register_dialogs(tasks_dialog)
     MyBot.register_dialogs(view_doc_dialog)
     MyBot.register_dialogs(settings_dialog)
+    MyBot.register_dialogs(list_doc_dialog)
 
     await loop_db()
     await MyBot.run_bot()
