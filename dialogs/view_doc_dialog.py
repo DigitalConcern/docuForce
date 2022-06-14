@@ -109,15 +109,19 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
             data = "SOLVED"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
                 await dialog_manager.dialog().switch_to(ViewDocSG.certificate)
+            else:
+                await post_doc_action(access_token, refresh_token, organization,
+                                      dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
         case "no":
             data = "DECLINED"
-    await post_doc_action(access_token, refresh_token, organization,
-                          dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
+            await post_doc_action(access_token, refresh_token, organization,
+                                  dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
     await dialog_manager.done()
 
 async def on_certificate_clicked(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
-#
+# await post_doc_sign(access_token, refresh_token, organization,
+#                     dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
 view_doc_dialog = Dialog(
     Window(
