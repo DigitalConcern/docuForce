@@ -16,7 +16,6 @@ from database import ActiveUsers
 
 class ViewDocSG(StatesGroup):
     choose_action = State()
-    certificate = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -165,23 +164,6 @@ view_doc_dialog = Dialog(
         Cancel(Const("⏪ Назад")),
         state=ViewDocSG.choose_action,
         getter=get_data
-    ),
-    Window(
-        Format("{certificates_list}"),
-        Group(
-            Select(
-                Format("{item}"),
-                items="certificate_keys",
-                item_id_getter=lambda x: x,
-                id="orgs",
-                on_click=on_certificate_clicked
-            ),
-            width=4
-        ),
-        Back(Const("⏪ Назад")),
-        state=ViewDocSG.certificate,
-        getter=get_data,
-        parse_mode=ParseMode.HTML
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
