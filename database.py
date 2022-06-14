@@ -6,7 +6,7 @@ from tortoise.models import Model
 
 class ActiveUsers(Model):
     user_id = fields.IntField(pk=True)
-    user_org_id=fields.UUIDField(null=True)
+    user_org_id = fields.UUIDField(null=True)
     login = fields.TextField()
     password = fields.TextField()
     organization = fields.UUIDField(null=True)

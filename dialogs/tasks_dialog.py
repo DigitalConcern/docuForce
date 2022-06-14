@@ -26,22 +26,32 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
-    if len(text) == 1:
-        dialog_manager.current_context().dialog_data["is_not_last"] = False
 
-    dialog_manager.current_context().dialog_data["text"] = text
-    dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
-        "counter", 0)
+    if len(text) == 0:
+        current_page = "На данный момент у Вас нет активных задач!"
+        return {
+            'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
+            'is_not_first': False,
+            'is_not_last': False,
+            'have_tasks': False
+        }
+    else:
+        if len(text) <= 1:
+            dialog_manager.current_context().dialog_data["is_not_last"] = False
 
-    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
-    current_page = text[0]
+        dialog_manager.current_context().dialog_data["text"] = text
+        dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
+            "counter", 0)
 
-    return {
-        'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
-        'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
-        'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
-        'text': text,
-    }
+        dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
+        current_page = text[0]
+
+        return {
+            'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
+            'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
+            'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
+            'have_tasks': True
+        }
 
 
 async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -85,6 +95,7 @@ tasks_dialog = Dialog(
         Format('{current_page}'),
         Button(
             Format("Просмотр документа"),
+            when="have_tasks",
             id="doc",
             on_click=go_to_doc
         ),

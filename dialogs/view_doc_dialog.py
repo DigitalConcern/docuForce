@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 import os
 
 from bot import MyBot
-from client import get_doc_dict, post_doc_action, post_doc_sign
+from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict
 from database import ActiveUsers
 
 
@@ -24,9 +24,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                         "current_document_id",
                                                                                         "organization", "user_org_id",
                                                                                         "current_document_id"))[0]
-    refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], \
-                                                                                                       data[2], data[3], \
-                                                                                                       data[4], data[5]
+    refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], data[2], data[3], data[4], data[5]
+
     dialog_manager.current_context().dialog_data["user_org_id"] = user_org_id
     dialog_manager.current_context().dialog_data["current_document_id"] = current_document_id
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
@@ -117,17 +116,18 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                 await post_doc_sign(access_token, refresh_token, organization,
                                     dialog_manager.current_context().dialog_data["user_org_id"],
                                     dialog_manager.current_context().dialog_data["doc_att_id"],
-                                    dialog_manager.current_context().dialog_data["current_document_id"] )
+                                    dialog_manager.current_context().dialog_data["current_document_id"])
+
         case "no":
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
+    tasks = await get_tasks_dict(access_token, refresh_token, organization)
     await dialog_manager.done()
-
-
-# await post_doc_sign(access_token, refresh_token, organization,
-#                     dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
+    # if len(tasks.keys()) != 0:
+    #
+    # else:
 
 view_doc_dialog = Dialog(
     Window(
