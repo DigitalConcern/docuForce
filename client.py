@@ -138,7 +138,7 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
     except:
         doc_task_id = ""
         doc_task_type = ""
-        doc_task_type_service=""
+        doc_task_type_service = ""
 
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/routes/flowStageTypes"
     headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
@@ -158,8 +158,8 @@ async def get_doc_dict(p_access, p_refresh, org_code, doc_code, page):
             "task_type_service": doc_task_type_service}
 
 
-async def post_doc_action(p_access, p_refresh, org_id, task_id, action, user_id):
-    headers = {"Access-Token": f"{p_access}",'content-type': 'application/json'}
+async def post_doc_action(p_access, p_refresh, org_id, task_id, action, user_tg_id):
+    headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json'}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/complete"
     # print(response.status_code, response.json(), sep='\n')
     action_response = requests.post(url, headers=headers, json={"result": action})
@@ -170,5 +170,60 @@ async def post_doc_action(p_access, p_refresh, org_id, task_id, action, user_id)
 
     if action_response.status_code == 409:
         for error in action_response.json():
-            MyBot.bot.send_message(user_id, error["errorMessage"])
+            MyBot.bot.send_message(user_tg_id, error["errorMessage"])
     print(action_response)
+
+
+async def get_certificate(p_access, p_refresh, org_code, user_id):
+    headers = {"Access-Token": f"{p_access}"}
+    certif_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/users/{user_id}/certificate"
+    certif_response = requests.get(certif_url, headers=headers)
+    while certif_response.status_code != 200:
+        await get_access(p_refresh)
+        certif_response = requests.get(certif_url, headers=headers)
+    try:
+        certif_id = certif_response.json()["oguid"]
+        certif_standard = certif_response.json()["standard"]
+    except:
+        certif_id = ""
+        certif_standard = ""
+    return certif_id, certif_standard
+
+
+async def post_hash(p_access, p_refresh, org_code, standard, doc_id):
+    headers = {"Access-Token": f"{p_access}"}
+    hash_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/attachments/hash"
+    data = {"standard": standard,
+            "attachmentOguid": doc_id,
+            "uploadedFileOguid": doc_id}
+    hash_response = requests.get(hash_url, headers=headers, data=data)
+    while hash_response.status_code != 200:
+        await get_access(p_refresh)
+        hash_response = requests.get(hash_url, headers=headers, data=data)
+    try:
+        hash = hash_response.json()["hash"]
+    except:
+        hash = ""
+    return hash
+
+
+async def post_doc_sign(p_access, p_refresh, org_id, user_id, doc_id):
+    certif = await get_certificate(p_access, p_refresh, org_id, user_id)
+    certif_id, certif_stand = certif[0], certif[1]
+    if certif_id == "":
+        return "ERROR"
+
+    hash = post_hash(p_access, p_refresh, org_id, certif_stand, doc_id)
+    if hash == "":
+        return "ERROR"
+
+    headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json'}
+    sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_id}/docuForceCertificate/{certif_id}/sign"
+    sign_data = {"hash": hash}
+    action_response = requests.post(sign_url, headers=headers, data=sign_data)
+
+    while action_response.status_code != 200:
+        await get_access(p_refresh)
+        action_response = requests.post(sign_url, headers=headers, data=sign_data)
+    print(action_response)
+    return "SUCCESS"

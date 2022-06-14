@@ -23,7 +23,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "current_document_id",
-                                                                                        "organization"))[0]
+                                                                                        "organization","user_org_id"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
 
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
@@ -108,10 +108,11 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
         case "yes":
             data = "SOLVED"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
-                await dialog_manager.dialog().switch_to(ViewDocSG.certificate)
-            else:
                 await post_doc_action(access_token, refresh_token, organization,
                                       dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
+            else:
+                await post_doc_sign(access_token, refresh_token, organization,
+                                      dialog_manager.current_context().dialog_data["task_id"],)
         case "no":
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
@@ -119,7 +120,11 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
 
     await dialog_manager.done()
 
+
 async def on_certificate_clicked(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    pass
+
+
 # await post_doc_sign(access_token, refresh_token, organization,
 #                     dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
