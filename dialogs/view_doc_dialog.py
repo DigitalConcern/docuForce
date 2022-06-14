@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 import os
 
 from bot import MyBot
-from client import get_doc_dict, post_doc_action
+from client import get_doc_dict, post_doc_action, post_doc_sign
 from database import ActiveUsers
 
 
@@ -22,9 +22,13 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "current_document_id",
-                                                                                        "organization","user_org_id"))[0]
-    refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
-
+                                                                                        "organization", "user_org_id",
+                                                                                        "current_document_id"))[0]
+    refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], \
+                                                                                                       data[2], data[3], \
+                                                                                                       data[4], data[5]
+    dialog_manager.current_context().dialog_data["user_org_id"] = user_org_id
+    dialog_manager.current_context().dialog_data["current_document_id"] = current_document_id
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 1)
 
@@ -111,17 +115,14 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                       dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
             else:
                 await post_doc_sign(access_token, refresh_token, organization,
-                                      dialog_manager.current_context().dialog_data["task_id"],)
+                                    dialog_manager.current_context().dialog_data["user_org_id"],
+                                    dialog_manager.current_context().dialog_data["current_document_id"])
         case "no":
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
     await dialog_manager.done()
-
-
-async def on_certificate_clicked(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
-    pass
 
 
 # await post_doc_sign(access_token, refresh_token, organization,
