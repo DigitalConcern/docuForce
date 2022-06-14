@@ -33,8 +33,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 0)
 
-    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[
-        dialog_manager.current_context().dialog_data["counter"]]
+    dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
     current_page = text[0]
 
     return {

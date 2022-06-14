@@ -42,7 +42,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     f.close()
 
     dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
-
+    dialog_manager.current_context().dialog_data["doc_att_id"] = doc["doc_att_id"]
     if dialog_manager.current_context().dialog_data["len"] == 1:
         dialog_manager.current_context().dialog_data["is_not_last"] = False
 
@@ -116,7 +116,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
             else:
                 await post_doc_sign(access_token, refresh_token, organization,
                                     dialog_manager.current_context().dialog_data["user_org_id"],
-                                    dialog_manager.current_context().dialog_data["current_document_id"])
+                                    dialog_manager.current_context().dialog_data["doc_att_id"],
+                                    dialog_manager.current_context().dialog_data["current_document_id"] )
         case "no":
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
