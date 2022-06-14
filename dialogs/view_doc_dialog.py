@@ -16,6 +16,7 @@ from database import ActiveUsers
 
 class ViewDocSG(StatesGroup):
     choose_action = State()
+    certificate = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -105,12 +106,17 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     match button.widget_id:
         case "yes":
             data = "SOLVED"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
+                await dialog_manager.dialog().switch_to(ViewDocSG.certificate)
         case "no":
             data = "DECLINED"
     await post_doc_action(access_token, refresh_token, organization,
                           dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
     await dialog_manager.done()
+
+async def on_certificate_clicked(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+#
 
 view_doc_dialog = Dialog(
     Window(
@@ -154,6 +160,23 @@ view_doc_dialog = Dialog(
         Cancel(Const("⏪ Назад")),
         state=ViewDocSG.choose_action,
         getter=get_data
+    ),
+    Window(
+        Format("{certificates_list}"),
+        Group(
+            Select(
+                Format("{item}"),
+                items="certificate_keys",
+                item_id_getter=lambda x: x,
+                id="orgs",
+                on_click=on_certificate_clicked
+            ),
+            width=4
+        ),
+        Back(Const("⏪ Назад")),
+        state=ViewDocSG.certificate,
+        getter=get_data,
+        parse_mode=ParseMode.HTML
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
