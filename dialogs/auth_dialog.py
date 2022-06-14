@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Start, Column, Select, Group
 from aiogram_dialog.widgets.text import Const, Format
 
-from client import sign_in
+from client import sign_in, get_user_id
 from bot import MyBot
 from database import ActiveUsers
 from .org_dialog import OrgSG
@@ -43,14 +43,16 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                          dialog_manager.current_context().dialog_data["password"])
 
     if resp:
-        await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
+        user_org_id = await get_user_id(resp[0])
         await ActiveUsers(user_id=dialog_manager.current_context().dialog_data["id"],
+                          user_org_id=user_org_id,
                           login=dialog_manager.current_context().dialog_data["login"],
                           password=dialog_manager.current_context().dialog_data["password"],
                           refresh_token=resp[1],
                           access_token=resp[0]
                           ).save()
         await dialog_manager.done()
+        await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
         await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:

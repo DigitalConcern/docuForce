@@ -26,6 +26,21 @@ async def sign_in(p_login, p_password) -> (str, str):
         return access["value"], refresh["value"]
 
 
+async def get_user_id(p_access) -> str:
+    headers = {"Access-Token": f"{p_access}"}
+
+    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
+
+    response = requests.get(url, headers=headers)
+    user_id = response.json()["oguid"]
+
+    while response.status_code != 200:
+        response = requests.post(url, headers=headers)
+        user_id = response.json()["oguid"]
+
+    return user_id
+
+
 async def get_access(p_refresh) -> str:
     headers = {'content-type': 'application/json'}
     data = {
