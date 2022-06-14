@@ -36,6 +36,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[
         dialog_manager.current_context().dialog_data["counter"]]
     current_page = text[0]
+
     return {
         'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),

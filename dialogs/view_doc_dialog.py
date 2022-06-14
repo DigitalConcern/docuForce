@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 import os
 
 from bot import MyBot
-from client import get_doc_dict
+from client import get_doc_dict, post_doc_action
 from database import ActiveUsers
 
 
@@ -24,8 +24,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                         "current_document_id",
                                                                                         "organization"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
+
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 1)
+
     doc = await get_doc_dict(access_token, refresh_token, organization, current_document_id,
                              dialog_manager.current_context().dialog_data["counter"])
     import base64
@@ -34,18 +36,33 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     with open(filename, 'wb+') as f:
         f.write(imgdata)
     f.close()
+
     dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
 
     if dialog_manager.current_context().dialog_data["len"] == 1:
         dialog_manager.current_context().dialog_data["is_not_last"] = False
-    # await MyBot.bot.send_photo(dialog_manager.event.from_user.id,imgdata)
+
+    dialog_manager.current_context().dialog_data["is_task"] = dialog_manager.current_context().dialog_data.get(
+        "is_task", False)
+    dialog_manager.current_context().dialog_data["yes_name"] = dialog_manager.current_context().dialog_data.get(
+        "yes_name", "Да")
+    dialog_manager.current_context().dialog_data["task_id"] = dialog_manager.current_context().dialog_data.get(
+        "task_id", "")
+    if doc["task_id"] != "":
+        dialog_manager.current_context().dialog_data["is_task"] = True
+        dialog_manager.current_context().dialog_data["yes_name"] = doc["task_type"]
+        dialog_manager.current_context().dialog_data["task_id"] = doc["task_id"]
+
+        # await MyBot.bot.send_photo(dialog_manager.event.from_user.id,imgdata)
     return {
         'filename': filename,
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
         'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
         'len': dialog_manager.current_context().dialog_data["len"],
         'is_not_one': dialog_manager.current_context().dialog_data["len"] != 1,
-        'counter': dialog_manager.current_context().dialog_data["counter"]
+        'counter': dialog_manager.current_context().dialog_data["counter"],
+        'is_task': dialog_manager.current_context().dialog_data.get("is_task", False),
+        'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да")
     }
 
 
@@ -79,6 +96,22 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             dialog_manager.current_context().dialog_data["is_not_first"] = True
 
 
+async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    data = list(
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
+                                                                                        "organization"))[0]
+    refresh_token, access_token, organization = data[0], data[1], data[2]
+
+    match button.widget_id:
+        case "yes":
+            data = "SOLVED"
+        case "no":
+            data = "DECLINED"
+    await post_doc_action(access_token, refresh_token, organization,
+                          dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
+
+    await dialog_manager.done()
+
 view_doc_dialog = Dialog(
     Window(
         StaticMedia(
@@ -105,6 +138,17 @@ view_doc_dialog = Dialog(
                    id="fin",
                    when="is_not_last",
                    on_click=switch_pages),
+
+        ),
+        Row(
+            Button(Format("{yes_name}"),
+                   when="is_task",
+                   id="yes",
+                   on_click=do_task),
+            Button(Format("Отказать"),
+                   when="is_task",
+                   id="no",
+                   on_click=do_task),
 
         ),
         Cancel(Const("⏪ Назад")),
