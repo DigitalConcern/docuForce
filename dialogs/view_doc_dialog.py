@@ -6,6 +6,7 @@ from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMo
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
 from aiogram_dialog.widgets.media import StaticMedia
+from aiogram_dialog.widgets.media.static import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 import os
 
@@ -27,9 +28,11 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], data[2], data[3], data[4], data[5]
 
     dialog_manager.current_context().dialog_data["user_org_id"] = user_org_id
+    dialog_manager.current_context().dialog_data["org_id"] = organization
     dialog_manager.current_context().dialog_data["current_document_id"] = current_document_id
     dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
         "counter", 1)
+    dialog_manager.current_context().dialog_data["access_token"] = access_token
 
     doc = await get_doc_dict(access_token, refresh_token, organization, current_document_id,
                              dialog_manager.current_context().dialog_data["counter"])
@@ -66,7 +69,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         'is_not_one': dialog_manager.current_context().dialog_data["len"] != 1,
         'counter': dialog_manager.current_context().dialog_data["counter"],
         'is_task': dialog_manager.current_context().dialog_data.get("is_task", False),
-        'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да")
+        'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),
+        'org_id':dialog_manager.current_context().dialog_data.get("org_id", ""),
+        'access_token': dialog_manager.current_context().dialog_data.get("access_token", ""),
+        'current_document_id': dialog_manager.current_context().dialog_data.get("current_document_id", ""),
     }
 
 
@@ -132,8 +138,9 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
 
 view_doc_dialog = Dialog(
     Window(
-        StaticMedia(
-            path="{filename}",
+        DynamicMedia(
+            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{current_document_id}/page/{counter}",
+            url_headers="{access_token}",
             type=ContentType.PHOTO
         ),
         Row(
