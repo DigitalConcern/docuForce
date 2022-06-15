@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from bot import MyBot
 from .tasks_dialog import TasksSG
-from .search_dialog import SearchSG
+# from .search_dialog import SearchSG
 from .list_doc_dialog import ListDocSG
 from .settings_dialog import SettingsSG
 from .messages_dialog import MessagesSG
@@ -27,7 +27,7 @@ menu_dialog = Dialog(
              type=ContentType.PHOTO
         ),
         Start(Const("Мои задачи"), id="tasks", state=TasksSG.choose_action),
-        Start(Const("Поиск документа"), id="search", state=SearchSG.choose_action),
+        Start(Const("Поиск документа"), id="search", state=ListDocSG.find),
         Start(Const("Список документов"), id="list", state=ListDocSG.choose_action),
         Start(Const("Настройки"), id="settings", state=SettingsSG.change_org),
         Start(Const("Сообщения"), id="messages", state=MessagesSG.choose_action),

@@ -129,6 +129,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     #
     # else:
 
+
 view_doc_dialog = Dialog(
     Window(
         StaticMedia(
@@ -172,5 +173,6 @@ view_doc_dialog = Dialog(
         state=ViewDocSG.choose_action,
         getter=get_data
     ),
+
     launch_mode=LaunchMode.SINGLE_TOP
 )

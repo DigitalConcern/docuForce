@@ -15,6 +15,7 @@ from .view_doc_dialog import ViewDocSG
 
 class ListDocSG(StatesGroup):
     choose_action = State()
+    find = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -22,9 +23,15 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-    dialog_manager.current_context().dialog_data["doc_list"] = dialog_manager.current_context().dialog_data.get("doc_list", "")
+
+    dialog_manager.current_context().dialog_data["find_string_doc"] = dialog_manager.current_context().dialog_data.get(
+        "find_string_doc", "")
+
+    dialog_manager.current_context().dialog_data["doc_list"] = dialog_manager.current_context().dialog_data.get(
+        "doc_list", "")
     if dialog_manager.current_context().dialog_data["doc_list"] == "":
-        doc_list = await get_doc_list(access_token, refresh_token, organization)
+        doc_list = await get_doc_list(access_token, refresh_token, organization,
+                                      contained_string=dialog_manager.current_context().dialog_data["find_string_doc"])
         dialog_manager.current_context().dialog_data["doc_list"] = doc_list
     else:
         doc_list = dialog_manager.current_context().dialog_data["doc_list"]
@@ -36,7 +43,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         doc_ids.append(doc[5])
 
     if len(text) == 0:
-        current_doc = "На данный момент у Вас нет документов!"
+        if dialog_manager.current_context().dialog_data["find_string_doc"] == "":
+            current_doc = "На данный момент у Вас нет документов!"
+        else:
+            current_doc = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
         return {
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", current_doc),
             'is_not_first': False,
@@ -51,7 +61,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
             "counter", 0)
 
-        dialog_manager.current_context().dialog_data["current_doc"] = text[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["current_doc"] = text[
+            dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_doc_id"] = doc_ids[
             dialog_manager.current_context().dialog_data["counter"]]
         return {
@@ -94,6 +105,11 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     await dialog_manager.start(ViewDocSG.choose_action)
 
 
+async def search_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
+    dialog_manager.current_context().dialog_data["find_string_doc"] = m.text
+    await dialog_manager.switch_to(ListDocSG.choose_action)
+
+
 list_doc_dialog = Dialog(
     Window(
         Format('{current_doc}'),
@@ -118,6 +134,12 @@ list_doc_dialog = Dialog(
         Cancel(Const("⏪ Назад")),
         state=ListDocSG.choose_action,
         getter=get_data
+    ),
+    Window(
+        Const("Введите строку для поиска в документах"),
+        MessageInput(search_handler),
+        Cancel(Const("⏪ Назад")),
+        state=ListDocSG.find,
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
