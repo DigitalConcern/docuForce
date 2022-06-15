@@ -22,14 +22,18 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-
-    doc_list = await get_doc_list(access_token, refresh_token, organization)
+    dialog_manager.current_context().dialog_data["doc_list"] = dialog_manager.current_context().dialog_data.get("doc_list", "")
+    if dialog_manager.current_context().dialog_data["doc_list"] == "":
+        doc_list = await get_doc_list(access_token, refresh_token, organization)
+        dialog_manager.current_context().dialog_data["doc_list"] = doc_list
+    else:
+        doc_list = dialog_manager.current_context().dialog_data["doc_list"]
     text = []
     doc_ids = []
     for doc in doc_list:
-        micro_text = f"{doc[1]}{doc[4]} {doc[2]}{doc[0]}"
+        micro_text = f"{doc[1]} {doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}"
         text.append(micro_text)
-        doc_ids.append(doc[3])
+        doc_ids.append(doc[5])
 
     if len(text) == 0:
         current_doc = "На данный момент у Вас нет документов!"
@@ -47,11 +51,11 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
             "counter", 0)
 
-        dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
-        current_doc = text[0]
-
+        dialog_manager.current_context().dialog_data["current_doc"] = text[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["current_doc_id"] = doc_ids[
+            dialog_manager.current_context().dialog_data["counter"]]
         return {
-            'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", current_doc),
+            'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", "-"),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
             'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
             'have_documents': True
@@ -86,7 +90,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
-        current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
+        current_document_id=dialog_manager.current_context().dialog_data["current_doc_id"])
     await dialog_manager.start(ViewDocSG.choose_action)
 
 

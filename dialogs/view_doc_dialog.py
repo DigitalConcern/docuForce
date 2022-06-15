@@ -75,7 +75,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
     match button.widget_id:
         case "plus":
             dialog_manager.current_context().dialog_data["counter"] += 1
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == \
+            if dialog_manager.current_context().dialog_data["counter"]  == \
                     dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 

@@ -18,12 +18,17 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-
-    tasks_dict = await get_tasks_dict(access_token, refresh_token, organization)
+    dialog_manager.current_context().dialog_data["tasks_dict"] = dialog_manager.current_context().dialog_data.get(
+        "tasks_dict", "")
+    if dialog_manager.current_context().dialog_data["tasks_dict"] == "":
+        tasks_dict = await get_tasks_dict(access_token, refresh_token, organization)
+        dialog_manager.current_context().dialog_data["tasks_dict"] = tasks_dict
+    else:
+        tasks_dict = dialog_manager.current_context().dialog_data["tasks_dict"]
     text = []
     doc_ids = []
     for task in tasks_dict.keys():
-        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}"
+        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
 
@@ -62,7 +67,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
+            if dialog_manager.current_context().dialog_data["counter"] +1 == len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 

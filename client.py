@@ -79,9 +79,9 @@ async def get_orgs_dict(p_access, p_refresh) -> dict:
 
 
 async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
-    headers = {"Access-Token": f"{p_access}"}
+    headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/flows/tasks"
-
+    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/userTypes"
     # print(response.status_code, response.json(), sep='\n')
     params = {'showMode': "NEED_TO_ACTION",
               'isCompleted': "false"}
@@ -119,14 +119,41 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
                     doc_key = str(task["document"]["type"])
                     metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/documentTypes/{doc_key}'
                     meta_response = requests.get(metaurl, headers=headers)
-                    doc_name = meta_response.json()["titles"]["ru"]
+                    try:
+                        doc_name = meta_response.json()["titles"]["ru"]
+                    except:
+                        try:
+                            doc_name = meta_response.json()["title"]
+                        except:
+                            doc_name = meta_response.json()["titles"]["en"]
+                    other_fields = ""
+                    try:
+                        # meta_fields = meta_response.json()["fields"]
+                        for field in meta_response.json()["fields"]:
+                            if field["formProperties"]["form"]["visible"] and (
+                                    field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+                                                         "documentNumber"]):
+                                try:
+                                    other_fields += field["component"]["label"] + ": " + str(
+                                        task["document"]["fields"][field["key"]])
+                                except:
+                                    other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                        task["document"]["fields"][field["key"]]) + "\n"
+                                print(other_fields)
+                    except:
+                        pass
+
+
                 except:
                     doc_name = ""
+
                 result[f"{ctr}"] = (cost,
                                     org__name,
                                     data,
                                     task["document"]["oguid"],
-                                    doc_index, doc_name
+                                    doc_index,
+                                    doc_name,
+                                    other_fields
                                     )  # Найти какие данные нужно вытащить из тасков
                 ctr += 1
             return result
@@ -255,21 +282,26 @@ async def post_doc_sign(p_access, p_refresh, org_id, user_id, att_doc_id, doc_id
     return "SUCCESS"
 
 
-async def get_doc_list(p_access, p_refresh, org_id):
+async def get_doc_list(p_access, p_refresh, org_id, contained_string=""):
     headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json'}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
 
-    response = requests.get(url, headers=headers)
+    if contained_string == "":
+        params = {}
+    else:
+        params = {"query.like": contained_string}
+
+    response = requests.get(url, headers=headers, params=params)
     while response.status_code != 200:
         await get_access(p_refresh)
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=params)
 
     result = []
     resp_list = response.json()
     for resp in resp_list:
         try:
             cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
-                resp["fields"]["currency"]) + "\n "
+                resp["fields"]["currency"]) + "\n"
         except:
             cost = ""
         try:
@@ -291,9 +323,35 @@ async def get_doc_list(p_access, p_refresh, org_id):
             doc_key = str(resp["type"])
             metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
             meta_response = requests.get(metaurl, headers=headers)
-            doc_name = meta_response.json()["titles"]["ru"]
+            try:
+                doc_name = meta_response.json()["titles"]["ru"]
+            except:
+                try:
+                    doc_name = meta_response.json()["title"]
+                except:
+                    doc_name = meta_response.json()["titles"]["en"]
+            other_fields = ""
+            try:
+                for field in meta_response.json()["fields"]:
+                    if field["formProperties"]["form"]["visible"] and (
+                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+                                                 "documentNumber"]):
+                        try:
+                            other_fields += field["component"]["label"] + ": " + str(
+                                resp["fields"][field["key"]])
+                        except:
+                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                resp["fields"][field["key"]]) + "\n"
+                        print(other_fields)
+            except:
+                pass
         except:
-            doc_name = ""
-        result.append((cost, org__name, data, doc_index, doc_name))
+            pass
+
+        try:
+            doc_id = resp["oguid"]
+        except:
+            doc_id = ""
+        result.append((cost, org__name, data, doc_index, doc_name, doc_id, other_fields))
 
     return result

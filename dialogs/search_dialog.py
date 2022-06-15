@@ -10,7 +10,15 @@ from aiogram_dialog.widgets.text import Const, Format
 
 
 class SearchSG(StatesGroup):
-    choose_action = State()
+    find = State()
 
 
-# search_dialog = Dialog()
+search_dialog = Dialog(
+    Window(
+        Const("Введите строку для поиска в документах"),
+        MessageInput(search_handler),
+        Cancel(Const("⏪ Назад")),
+        state=SearchSG.find,
+    ),
+    launch_mode=LaunchMode.SINGLE_TOP
+)
