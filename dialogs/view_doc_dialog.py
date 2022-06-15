@@ -36,12 +36,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
     doc = await get_doc_dict(access_token, refresh_token, organization, current_document_id,
                              dialog_manager.current_context().dialog_data["counter"])
-    import base64
-    imgdata = base64.b64decode(doc["image_bin"])
-    filename = f'{current_document_id}__{dialog_manager.current_context().dialog_data["counter"]}.jpg'
-    with open(filename, 'wb+') as f:
-        f.write(imgdata)
-    f.close()
+    # import base64
+    # imgdata = base64.b64decode(doc["image_bin"])
+    # filename = f'{current_document_id}__{dialog_manager.current_context().dialog_data["counter"]}.jpg'
+    # with open(filename, 'wb+') as f:
+    #     f.write(imgdata)
+    # f.close()
 
     dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
     dialog_manager.current_context().dialog_data["doc_att_id"] = doc["doc_att_id"]
@@ -62,7 +62,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
         # await MyBot.bot.send_photo(dialog_manager.event.from_user.id,imgdata)
     return {
-        'filename': filename,
+        # 'filename': filename,
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
         'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
         'len': dialog_manager.current_context().dialog_data["len"],
@@ -77,7 +77,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
 
 async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
-    os.remove((await get_data(dialog_manager=dialog_manager))["filename"])
+    # os.remove((await get_data(dialog_manager=dialog_manager))["filename"])
     match button.widget_id:
         case "plus":
             dialog_manager.current_context().dialog_data["counter"] += 1
@@ -129,7 +129,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
-    tasks = await get_tasks_dict(access_token, refresh_token, organization)
+    # tasks = await get_tasks_dict(access_token, refresh_token, organization)
     await dialog_manager.done()
     # if len(tasks.keys()) != 0:
     #

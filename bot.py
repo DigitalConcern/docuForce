@@ -1,5 +1,6 @@
 import base64
 import logging
+from io import BytesIO
 from typing import IO, Union, Optional
 
 import requests
@@ -12,13 +13,14 @@ from aiogram_dialog.message_manager import MessageManager
 
 from config import API_TOKEN
 
+
 class SuperMesssageManager(MessageManager):
     async def get_media_source(self, media: MediaAttachment) -> Union[IO, str]:
         if media.file_id:
             return media.file_id.file_id
         if media.url:
-            response=requests.get(url=media.url,headers=media.url_headers)
-            return base64.b64decode(response.text)
+            response = requests.get(url=media.url, headers=media.url_headers)
+            return BytesIO(base64.b64decode(response.text))
         else:
             return open(media.path, "rb")
 
@@ -37,12 +39,13 @@ class SuperMesssageManager(MessageManager):
     #         file_unique_id=media.file_unique_id,
     #     )
 
+
 class MyBot:
     storage = MemoryStorage()
     bot = Bot(token=API_TOKEN)
     dp = Dispatcher(bot, storage=storage)
-    our_cool_mess=SuperMesssageManager()
-    registry = DialogRegistry(dp,message_manager=our_cool_mess)
+    our_cool_mess = SuperMesssageManager()
+    registry = DialogRegistry(dp, message_manager=our_cool_mess)
 
     access_token = ""
     refresh_token = ""
