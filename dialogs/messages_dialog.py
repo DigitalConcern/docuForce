@@ -23,10 +23,15 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
+
     dialog_manager.current_context().dialog_data["conversations_dict"] = dialog_manager.current_context().dialog_data.get(
         "conversations_dict", "")
+
     if dialog_manager.current_context().dialog_data["conversations_dict"] == "":
-        conversations_dict = await get_messages_dict(access_token, refresh_token, organization)
+        conversations_dict = await get_messages_dict(access_token=access_token,
+                                                     refresh_token=refresh_token,
+                                                     org_id=organization,
+                                                     user_id=dialog_manager.event.from_user.id)
         dialog_manager.current_context().dialog_data["conversations_dict"] = conversations_dict
     else:
         conversations_dict = dialog_manager.current_context().dialog_data["conversations_dict"]
@@ -109,10 +114,13 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
 
-    await post_message_answer(refresh_token, access_token, organization,
-                              dialog_manager.current_context().dialog_data["current_doc"],
-                              dialog_manager.current_context().dialog_data["current_user"],
-                              m.text)
+    await post_message_answer(refresh_token=refresh_token,
+                              access_token=access_token,
+                              org_id=organization,
+                              entity_id=dialog_manager.current_context().dialog_data["current_doc"],
+                              user_oguid=dialog_manager.current_context().dialog_data["current_user"],
+                              answer=m.text,
+                              user_id=m.from_user.id)
     dialog_manager.current_context().dialog_data["conversations_dict"] = ""
     await dialog_manager.done()
 

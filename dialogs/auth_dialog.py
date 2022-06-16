@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Start, Column, Select, Group
 from aiogram_dialog.widgets.text import Const, Format
 
-from client import sign_in, get_user_id
+from client import sign_in, get_user_oguid
 from bot import MyBot
 from database import ActiveUsers
 from .org_dialog import OrgSG
@@ -39,11 +39,11 @@ async def login_handler(m: Message, dialog: Dialog, dialog_manager: DialogManage
 async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["password"] = m.text
 
-    resp = await sign_in(dialog_manager.current_context().dialog_data["login"],
-                         dialog_manager.current_context().dialog_data["password"])
+    resp = await sign_in(login=dialog_manager.current_context().dialog_data["login"],
+                         password=dialog_manager.current_context().dialog_data["password"])
 
     if resp:
-        user_org_id = await get_user_id(resp[0])
+        user_org_id = await get_user_oguid(access_token=resp[0])
         await ActiveUsers(user_id=dialog_manager.current_context().dialog_data["id"],
                           user_org_id=user_org_id,
                           login=dialog_manager.current_context().dialog_data["login"],
@@ -53,6 +53,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           ).save()
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
+
         await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:

@@ -21,7 +21,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["tasks_dict"] = dialog_manager.current_context().dialog_data.get(
         "tasks_dict", "")
     if dialog_manager.current_context().dialog_data["tasks_dict"] == "":
-        tasks_dict = await get_tasks_dict(access_token, refresh_token, organization)
+        tasks_dict = await get_tasks_dict(access_token=access_token,
+                                          refresh_token=refresh_token,
+                                          org_id=organization,
+                                          user_id=dialog_manager.event.from_user.id)
         dialog_manager.current_context().dialog_data["tasks_dict"] = tasks_dict
     else:
         tasks_dict = dialog_manager.current_context().dialog_data["tasks_dict"]

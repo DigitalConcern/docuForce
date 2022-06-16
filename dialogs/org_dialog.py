@@ -23,7 +23,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     data = list(await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token"))[0]
     refresh_token, access_token = data[0], data[1]
 
-    orgs_dict = await get_orgs_dict(access_token, refresh_token)
+    orgs_dict = await get_orgs_dict(access_token=access_token,
+                                    refresh_token=refresh_token,
+                                    user_id=dialog_manager.event.from_user.id)
     orgs_list = "Выберите организацию\n\n"
     for key in orgs_dict.keys():
         orgs_list += f'{key}. {orgs_dict[key][0]}\n'

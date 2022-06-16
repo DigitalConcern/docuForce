@@ -38,14 +38,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         "counter", 1)
     dialog_manager.current_context().dialog_data["access_token"] = access_token
 
-    doc = await get_doc_dict(access_token, refresh_token, organization, current_document_id,
-                             dialog_manager.current_context().dialog_data["counter"])
-    # import base64
-    # imgdata = base64.b64decode(doc["image_bin"])
-    # filename = f'{current_document_id}__{dialog_manager.current_context().dialog_data["counter"]}.jpg'
-    # with open(filename, 'wb+') as f:
-    #     f.write(imgdata)
-    # f.close()
+    doc = await get_doc_dict(access_token=access_token,
+                             refresh_token=refresh_token,
+                             org_id=organization,
+                             doc_id=current_document_id,
+                             page=dialog_manager.current_context().dialog_data["counter"],
+                             user_id=dialog_manager.event.from_user.id)
 
     dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
     dialog_manager.current_context().dialog_data["doc_att_id"] = doc["doc_att_id"]
@@ -64,9 +62,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["task_id"] = doc["task_id"]
         dialog_manager.current_context().dialog_data["task_type_service"] = doc["task_type_service"]
 
-        # await MyBot.bot.send_photo(dialog_manager.event.from_user.id,imgdata)
     return {
-        # 'filename': filename,
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
         'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
         'len': dialog_manager.current_context().dialog_data["len"],
@@ -82,7 +78,6 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
 
 async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
-    # os.remove((await get_data(dialog_manager=dialog_manager))["filename"])
     match button.widget_id:
         case "plus":
             dialog_manager.current_context().dialog_data["counter"] += 1
@@ -121,13 +116,20 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
         case "yes":
             data = "SOLVED"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
-                await post_doc_action(access_token, refresh_token, organization,
-                                      dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
+                await post_doc_action(access_token=access_token,
+                                      refresh_token=refresh_token,
+                                      org_id=organization,
+                                      task_id=dialog_manager.current_context().dialog_data["task_id"],
+                                      action=data,
+                                      user_id=c.from_user.id)
             else:
-                await post_doc_sign(access_token, refresh_token, organization,
-                                    dialog_manager.current_context().dialog_data["user_org_id"],
-                                    dialog_manager.current_context().dialog_data["doc_att_id"],
-                                    dialog_manager.current_context().dialog_data["current_document_id"])
+                await post_doc_sign(access_token=access_token,
+                                    refresh_token=refresh_token,
+                                    org_id=organization,
+                                    user_oguid=dialog_manager.current_context().dialog_data["user_org_id"],
+                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
+                                    doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
+                                    user_id=dialog_manager.event.from_user.id)
 
         case "no":
             data = "DECLINED"
@@ -179,11 +181,6 @@ view_doc_dialog = Dialog(
                    on_click=switch_pages),
 
         ),
-        # Url(
-        #     Const("Скачать"),
-        #     Format("https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"),
-        #
-        # ),
         Button(Const("Скачать"),
                on_click=download_file,
                id="download"),
