@@ -106,6 +106,9 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc_id"])
     dialog_manager.current_context().dialog_data["doc_list"] = ""
+    dialog_manager.current_context().dialog_data["counter"] = 0
+    dialog_manager.current_context().dialog_data["is_not_first"] = False
+    dialog_manager.current_context().dialog_data["is_not_last"] = True
     await dialog_manager.start(ViewDocSG.choose_action)
 
 

@@ -196,7 +196,7 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     try:
         doc_task_id = doc_response_json["tasks"][0]["oguid"]
         doc_task_type = doc_response_json["tasks"][0]["type"]
-    except KeyError:
+    except : #ругается на то что IndexError: list index out of range если нет задач по файлу
         doc_task_id = ""
         doc_task_type = ""
 
