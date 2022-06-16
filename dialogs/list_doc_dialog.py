@@ -6,6 +6,7 @@ from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMo
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
 from aiogram_dialog.widgets.media import StaticMedia
+from aiogram_dialog.widgets.media.static import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
 from database import ActiveUsers
@@ -72,6 +73,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", "-"),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
             'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
+            'org_id': dialog_manager.current_context().dialog_data.get("org_id", organization),
+            'access_token': dialog_manager.current_context().dialog_data.get("access_token", access_token),
+            'current_doc_id': dialog_manager.current_context().dialog_data.get("current_doc_id", 0),
             'have_documents': True
         }
 
@@ -119,6 +123,11 @@ async def search_handler(m: Message, dialog: Dialog, dialog_manager: DialogManag
 
 list_doc_dialog = Dialog(
     Window(
+        DynamicMedia(
+            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{current_doc_id}/page/1",
+            url_headers="{access_token}",
+            type=ContentType.PHOTO
+        ),
         Format('{current_doc}'),
         Button(
             Format("Просмотр документа"),

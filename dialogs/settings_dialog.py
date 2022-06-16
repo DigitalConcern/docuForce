@@ -19,7 +19,7 @@ class SettingsSG(StatesGroup):
 settings_dialog = Dialog(
     Window(
         StaticMedia(
-            path="resources/settings.png",
+            path="resources/sett1.png",
             type=ContentType.PHOTO
         ),
         Start(Const("Сменить организацию"), id="change_org", state=OrgSG.choose_org),
