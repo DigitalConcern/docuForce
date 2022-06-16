@@ -1,4 +1,5 @@
 from typing import Dict
+from collections import defaultdict
 
 import requests
 import datetime
@@ -81,10 +82,21 @@ async def get_orgs_dict(p_access, p_refresh) -> dict:
 async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
     headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/flows/tasks"
-    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/documents/userTypes"
-    # print(response.status_code, response.json(), sep='\n')
+
     params = {'showMode': "NEED_TO_ACTION",
               'isCompleted': "false"}
+
+    response = requests.get(url, headers=headers, params=params)
+    while response.status_code != 200:
+        await get_access(p_refresh)
+        response = requests.get(url, headers=headers, params=params)
+
+    types_headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json', "Accept-Language": "ru"}
+    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/routes/flowStageTypes"
+    response_types = requests.get(types_url, headers=types_headers, params=params)
+
+    response_types_list = response_types.json()
+
     while True:
         response = requests.get(url, headers=headers, params=params)
 
@@ -142,18 +154,24 @@ async def get_tasks_dict(p_access, p_refresh, org_code) -> dict:
                                 print(other_fields)
                     except:
                         pass
-
-
                 except:
                     doc_name = ""
 
+                stage = "\n\n" + f"<i>Завершено</i>"
+                for stage_type in response_types_list:
+                    try:
+                        if stage_type["type"] == task["document"]['flowStageType']:
+                            stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+                    except:
+                        stage = ""
                 result[f"{ctr}"] = (cost,
                                     org__name,
                                     data,
                                     task["document"]["oguid"],
                                     doc_index,
                                     doc_name,
-                                    other_fields
+                                    other_fields,
+                                    stage
                                     )  # Найти какие данные нужно вытащить из тасков
                 ctr += 1
             return result
@@ -296,8 +314,16 @@ async def get_doc_list(p_access, p_refresh, org_id, contained_string=""):
         await get_access(p_refresh)
         response = requests.get(url, headers=headers, params=params)
 
+    types_headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json', "Accept-Language": "ru"}
+    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
+    response_types = requests.get(types_url, headers=types_headers, params=params)
+    while response.status_code != 200:
+        await get_access(p_refresh)
+        response_types = requests.get(types_url, headers=types_headers, params=params)
+
     result = []
     resp_list = response.json()
+    response_types_list = response_types.json()
     for resp in resp_list:
         try:
             cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
@@ -352,6 +378,138 @@ async def get_doc_list(p_access, p_refresh, org_id, contained_string=""):
             doc_id = resp["oguid"]
         except:
             doc_id = ""
-        result.append((cost, org__name, data, doc_index, doc_name, doc_id, other_fields))
+
+        stage = "\n\n" + f"<i>Завершено</i>"
+        for stage_type in response_types_list:
+            try:
+                if stage_type["type"] == resp['flowStageType']:
+                    stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+            except:
+                stage = ""
+
+        result.append((cost, org__name, data, doc_index, doc_name, doc_id, other_fields, stage))
 
     return result
+
+
+async def get_messages_dict(p_access, p_refresh, org_code):
+    headers = {"Access-Token": f"{p_access}", "Accept-Language": "ru"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/flows/tasks"
+
+    params = {'showMode': "TODOS_ONLY",
+              'isCompleted': "false"}
+
+    response = requests.get(url, headers=headers, params=params)
+    while response.status_code != 200:
+        await get_access(p_refresh)
+        response = requests.get(url, headers=headers, params=params)
+
+    types_headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json', "Accept-Language": "ru"}
+    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/routes/flowStageTypes"
+    response_types = requests.get(types_url, headers=types_headers, params=params)
+
+    response_types_list = response_types.json()
+    conversations = response.json()
+
+    result = {}
+    messages = defaultdict(list)
+    ctr = 0
+    for conversation in conversations:
+        try:
+            cost = "Сумма: " + str(conversation["document"]["fields"]["sumTotal"]) + " " + str(
+                conversation["document"]["fields"]["currency"])
+        except:
+            cost = ""
+        try:
+            org__name = conversation["document"]["fields"]["contractor"] + "\n"
+        except:
+            org__name = ""
+        try:
+            data = " От " + datetime.datetime.fromtimestamp(
+                conversation["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
+        except:
+            data = ""
+        try:
+            doc_index = "№" + str(conversation["document"]["fields"]["documentNumber"])
+            if data == "":
+                doc_index += "\n"
+        except:
+            doc_index = ""
+        try:
+            doc_key = str(conversation["document"]["type"])
+            metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_code)}/documentTypes/{doc_key}'
+            meta_response = requests.get(metaurl, headers=headers)
+            try:
+                doc_name = meta_response.json()["titles"]["ru"] + " "
+            except:
+                try:
+                    doc_name = meta_response.json()["title"] + " "
+                except:
+                    doc_name = meta_response.json()["titles"]["en"] + " "
+            other_fields = ""
+            try:
+                # meta_fields = meta_response.json()["fields"]
+                for field in meta_response.json()["fields"]:
+                    if field["formProperties"]["form"]["visible"] and (
+                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+                                                 "documentNumber"]):
+                        try:
+                            other_fields += field["component"]["label"] + ": " + str(
+                                conversation["document"]["fields"][field["key"]])
+                        except:
+                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                conversation["document"]["fields"][field["key"]]) + "\n"
+                        print(other_fields)
+            except:
+                pass
+        except:
+            doc_name = ""
+
+        stage = "\n\n" + f"<i>Завершено</i>"
+        for stage_type in response_types_list:
+            try:
+                if stage_type["type"] == conversation["document"]['flowStageType']:
+                    stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+            except:
+                stage = ""
+        try:
+            comment = "\n\n" + conversation["task"]["description"]
+        except:
+            comment = ""
+
+        try:
+            author = "\n" + "От кого: " + conversation["task"]["author"]["name"] + " " + conversation["task"]["author"][
+                "surname"]
+        except:
+            author = ""
+        messages[conversation["document"]["oguid"]].append(comment + author)
+
+        result[conversation["document"]["oguid"]] = (cost,
+                                                     org__name,
+                                                     data,
+                                                     doc_index,
+                                                     doc_name,
+                                                     other_fields,
+                                                     messages,
+                                                     stage,
+                                                     conversation["task"]["oguid"],
+                                                     conversation["task"]["author"]["oguid"]
+                                                     )  # Найти какие данные нужно вытащить из тасков
+    return result
+
+
+async def post_message_answer(p_access, p_refresh, org_id, entity_id, user_og_id, answer):
+    headers = {"Access-Token": f"{p_access}", 'content-type': 'application/json'}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/entities/{entity_id}/tasks"
+
+    json = {
+        'assignedToUserOguid': user_og_id,
+        "description": answer
+    }
+
+    response = requests.post(url, headers=headers, json=json)
+    while response.status_code != 201:
+        await get_access(p_refresh)
+        response = requests.post(url, headers=headers, json=json)
+
+    return "SUCCESS"

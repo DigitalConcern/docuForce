@@ -129,11 +129,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
-    # tasks = await get_tasks_dict(access_token, refresh_token, organization)
     await dialog_manager.done()
-    # if len(tasks.keys()) != 0:
-    #
-    # else:
 
 
 view_doc_dialog = Dialog(

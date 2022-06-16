@@ -29,3 +29,4 @@ settings_dialog = Dialog(
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
+

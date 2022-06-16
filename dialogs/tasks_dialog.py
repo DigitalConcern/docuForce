@@ -28,7 +28,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     text = []
     doc_ids = []
     for task in tasks_dict.keys():
-        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}"
+        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
 
@@ -88,6 +88,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
+    dialog_manager.current_context().dialog_data["tasks_dict"] = ""
     await dialog_manager.start(ViewDocSG.choose_action)
 
 
@@ -118,7 +119,8 @@ tasks_dialog = Dialog(
         ),
         Cancel(Const("⏪ Назад")),
         state=TasksSG.choose_action,
-        getter=get_data
+        getter=get_data,
+        parse_mode=ParseMode.HTML
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )

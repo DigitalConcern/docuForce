@@ -38,7 +38,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     text = []
     doc_ids = []
     for doc in doc_list:
-        micro_text = f"{doc[1]} {doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}"
+        micro_text = f"{doc[1]} {doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}{doc[7]}"
         text.append(micro_text)
         doc_ids.append(doc[5])
 
@@ -102,6 +102,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc_id"])
+    dialog_manager.current_context().dialog_data["doc_list"] = ""
     await dialog_manager.start(ViewDocSG.choose_action)
 
 
@@ -133,7 +134,8 @@ list_doc_dialog = Dialog(
         ),
         Cancel(Const("⏪ Назад")),
         state=ListDocSG.choose_action,
-        getter=get_data
+        getter=get_data,
+        parse_mode=ParseMode.HTML
     ),
     Window(
         Const("Введите строку для поиска в документах"),
