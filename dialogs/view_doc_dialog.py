@@ -1,5 +1,7 @@
+from io import BytesIO
+
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import Message, CallbackQuery, ParseMode, ContentType
+from aiogram.types import Message, CallbackQuery, ParseMode, ContentType, InputFile
 
 from aiogram_dialog import Dialog, DialogManager, Window, ChatEvent, StartMode
 from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMode
@@ -11,7 +13,7 @@ from aiogram_dialog.widgets.text import Const, Format
 import os
 
 from bot import MyBot
-from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict
+from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict, get_file
 from database import ActiveUsers
 
 
@@ -25,7 +27,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                         "current_document_id",
                                                                                         "organization", "user_org_id",
                                                                                         "current_document_id"))[0]
-    refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], data[2], data[3], data[4], data[5]
+    refresh_token, access_token, current_document_id, organization, user_org_id, current_document_id = data[0], data[1], \
+                                                                                                       data[2], data[3], \
+                                                                                                       data[4], data[5]
 
     dialog_manager.current_context().dialog_data["user_org_id"] = user_org_id
     dialog_manager.current_context().dialog_data["org_id"] = organization
@@ -70,9 +74,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         'counter': dialog_manager.current_context().dialog_data["counter"],
         'is_task': dialog_manager.current_context().dialog_data.get("is_task", False),
         'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),
-        'org_id':dialog_manager.current_context().dialog_data.get("org_id", ""),
+        'org_id': dialog_manager.current_context().dialog_data.get("org_id", ""),
         'access_token': dialog_manager.current_context().dialog_data.get("access_token", ""),
         'current_document_id': dialog_manager.current_context().dialog_data.get("current_document_id", ""),
+        'doc_att_id': dialog_manager.current_context().dialog_data.get("doc_att_id", ""),
     }
 
 
@@ -81,7 +86,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
     match button.widget_id:
         case "plus":
             dialog_manager.current_context().dialog_data["counter"] += 1
-            if dialog_manager.current_context().dialog_data["counter"]  == \
+            if dialog_manager.current_context().dialog_data["counter"] == \
                     dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
@@ -132,6 +137,18 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     await dialog_manager.done()
 
 
+async def download_file(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    data = list(
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
+                                                                                        "current_document_id",
+                                                                                        "organization"))[0]
+    refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
+    file_text = await get_file(p_access=access_token, p_refresh=refresh_token, org_code=organization,
+                               doc_att_id=dialog_manager.current_context().dialog_data["doc_att_id"])
+    file = InputFile(filename=file_text["file_title"], path_or_bytesio=BytesIO(file_text["file_content_bytes"]))
+    await MyBot.bot.send_document(chat_id=c.from_user.id, document=file)
+
+
 view_doc_dialog = Dialog(
     Window(
         DynamicMedia(
@@ -164,8 +181,12 @@ view_doc_dialog = Dialog(
         ),
         # Url(
         #     Const("Скачать"),
-        #     Format("{download_url}")
+        #     Format("https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"),
+        #
         # ),
+        Button(Const("Скачать"),
+               on_click=download_file,
+               id="download"),
         Row(
             Button(Format("{yes_name}"),
                    when="is_task",

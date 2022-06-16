@@ -513,3 +513,16 @@ async def post_message_answer(p_access, p_refresh, org_id, entity_id, user_og_id
         response = requests.post(url, headers=headers, json=json)
 
     return "SUCCESS"
+
+
+async def get_file(p_access, p_refresh, org_code, doc_att_id):
+    headers = {"Access-Token": f"{p_access}"}
+    download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/attachments/{doc_att_id}/file"
+    download_response = requests.get(download_url, headers=headers)
+    while download_response.status_code != 200:
+        await get_access(p_refresh)
+        download_response = requests.get(download_url, headers=headers)
+    download_response_content = download_response.content
+    download_response_title = download_response.headers.get("content-disposition")[22:-1]
+    return {"file_title": download_response_title,
+            "file_content_bytes": download_response_content}
