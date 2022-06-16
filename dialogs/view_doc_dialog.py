@@ -135,7 +135,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
 view_doc_dialog = Dialog(
     Window(
         DynamicMedia(
-            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{current_document_id}/page/{counter}",
+            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{"
+                "current_document_id}/page/{counter}",
             url_headers="{access_token}",
             type=ContentType.PHOTO
         ),
@@ -161,6 +162,10 @@ view_doc_dialog = Dialog(
                    on_click=switch_pages),
 
         ),
+        # Url(
+        #     Const("Скачать"),
+        #     Format("{download_url}")
+        # ),
         Row(
             Button(Format("{yes_name}"),
                    when="is_task",
