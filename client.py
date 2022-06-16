@@ -205,7 +205,7 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     except KeyError:
         doc_att_id = ""
 
-    task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{doc_id}/routes/flowStageTypes"
+    task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     type_response = requests.get(task_type_url, headers=headers)
     while type_response.status_code != 200:
@@ -291,7 +291,7 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
         return "ERROR"
 
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_id}/docuForceCertificate/{certif_id}/sign"
+    sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
     sign_data = {"hash": hash}
     action_response = requests.post(sign_url, headers=headers, json=sign_data)
 
@@ -346,7 +346,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         try:
             data = " От " + datetime.datetime.fromtimestamp(
                 resp["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
-        except KeyError:
+        except: #Если его нет то он не разделится на 1е3
             data = ""
         try:
             doc_index = "№" + str(resp["fields"]["documentNumber"])

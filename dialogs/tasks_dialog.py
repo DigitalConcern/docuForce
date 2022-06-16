@@ -52,8 +52,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             "counter", 0)
 
         dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
-        current_page = text[0]
-
+        current_page = text[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["current_page"] = current_page
         return {
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
@@ -92,6 +92,9 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
     dialog_manager.current_context().dialog_data["tasks_dict"] = ""
+    dialog_manager.current_context().dialog_data["counter"] = 0
+    dialog_manager.current_context().dialog_data["is_not_first"] = False
+    dialog_manager.current_context().dialog_data["is_not_last"] = True
     await dialog_manager.start(ViewDocSG.choose_action)
 
 

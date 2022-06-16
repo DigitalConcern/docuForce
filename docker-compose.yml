@@ -1,0 +1,9 @@
+postgresql:
+  image: postgres:latest
+  ports:
+    - "5433:5432"
+
+project:
+  build: ./
+  depends_on:
+    - postgresql
