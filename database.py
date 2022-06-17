@@ -13,6 +13,8 @@ class ActiveUsers(Model):
     refresh_token = fields.TextField()
     access_token = fields.TextField()
     current_document_id = fields.TextField(null=True)
+    eight_hour_notification = fields.BooleanField()
+    instant_notification = fields.BooleanField()
 
     class Meta:
         table = "users"

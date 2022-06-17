@@ -23,7 +23,6 @@ async def main():
     MyBot.register_dialogs(messages_dialog)
 
     await loop_db()
-    await loop_notifications()
     await MyBot.run_bot()
 
 

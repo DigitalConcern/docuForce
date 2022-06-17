@@ -12,7 +12,7 @@ from bot import MyBot
 from database import ActiveUsers
 from .org_dialog import OrgSG
 from .menu_dialog import MenuSG
-
+from notifications import loop_notifications
 
 class AuthSG(StatesGroup):
     login = State()
@@ -25,6 +25,7 @@ async def start(m: Message, dialog_manager: DialogManager):
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
     else:
+        await loop_notifications()
         await dialog_manager.start(MenuSG.choose_action)
 
 
@@ -53,7 +54,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           ).save()
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
-
+        await loop_notifications()
         await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:
