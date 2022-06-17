@@ -93,7 +93,8 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
 
     response = requests.get(url, headers=headers, params=params)
     while response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
         response = requests.get(url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
@@ -101,11 +102,8 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     response_types = requests.get(types_url, headers=types_headers, params=params)
 
     response_types_list = response_types.json()
-    while response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
-        response = requests.get(url, headers=headers, params=params)
-
     tasks = response.json()
+
     result = {}
     ctr = 0
     for task in tasks:
@@ -183,14 +181,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
     page_response = requests.get(page_url, headers=headers)
     while page_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}"}
+        page_response = requests.get(page_url, headers=headers)
     len = page_response.headers.get("X-Total-Pages")
     binary_img = page_response.text
 
     doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
     doc_response = requests.get(doc_url, headers=headers)
-    while doc_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
     doc_response_json = doc_response.json()
 
     try:
@@ -207,10 +205,10 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
 
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+
     type_response = requests.get(task_type_url, headers=headers)
-    while type_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
     types_response_json = type_response.json()
+
     doc_task_name = ""
     for type in types_response_json:
         if type["type"] == doc_task_type:
@@ -231,14 +229,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     page_response = requests.get(page_url, headers=headers)
     while page_response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}"}
+        page_response = requests.get(page_url, headers=headers)
     len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
     # документа, при этом её больше особо ниоткуда не вытащишь
     # *****************, я в шоке
 
     doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
     doc_response = requests.get(doc_url, headers=headers)
-    while doc_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
     doc_response_json = doc_response.json()
 
     try:
@@ -256,9 +254,8 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     type_response = requests.get(task_type_url, headers=headers)
-    while type_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
     types_response_json = type_response.json()
+
     doc_task_name = ""
     for type in types_response_json:
         if type["type"] == doc_task_type:
@@ -277,7 +274,8 @@ async def post_doc_action(access_token, refresh_token, org_id, task_id, action, 
     action_response = requests.post(url, headers=headers, json={"result": action})
 
     while (action_response.status_code == 400) or (action_response.status_code == 500):
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         action_response = requests.post(url, headers=headers, json={"result": action})
 
     if action_response.status_code == 409:
@@ -289,9 +287,12 @@ async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_
     headers = {"Access-Token": f"{access_token}"}
     certif_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/certificate"
     certif_response = requests.get(certif_url, headers=headers)
+
     while certif_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}"}
         certif_response = requests.get(certif_url, headers=headers)
+
     try:
         certif_id = certif_response.json()["oguid"]
         certif_standard = certif_response.json()["standard"]
@@ -309,7 +310,8 @@ async def post_hash(access_token, refresh_token, org_id, standard, att_doc_id, u
 
     hash_response = requests.post(hash_url, headers=headers, json=data)
     while hash_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         hash_response = requests.post(hash_url, headers=headers, json=data)
     try:
         hash = hash_response.json()["hash"]
@@ -343,7 +345,8 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
     action_response = requests.post(sign_url, headers=headers, json=sign_data)
 
     while action_response.status_code != 201:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         action_response = requests.post(sign_url, headers=headers, json=sign_data)
 
     add_sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
@@ -366,16 +369,13 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
 
     response = requests.get(url, headers=headers, params=params)
     while response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         response = requests.get(url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-
     response_types = requests.get(types_url, headers=types_headers, params=params)
-    while response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
-        response_types = requests.get(types_url, headers=types_headers, params=params)
 
     result = []
     resp_list = response.json()
@@ -457,7 +457,8 @@ async def get_messages_dict(access_token, refresh_token, org_id, user_id):
 
     response = requests.get(url, headers=headers, params=params)
     while response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
         response = requests.get(url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
@@ -563,19 +564,23 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
 
     response = requests.post(url, headers=headers, json=json)
     while response.status_code != 201:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         response = requests.post(url, headers=headers, json=json)
 
     return "SUCCESS"
 
 
-async def get_file(p_access, p_refresh, org_code, doc_att_id):
-    headers = {"Access-Token": f"{p_access}"}
-    download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_code}/attachments/{doc_att_id}/file"
+async def get_file(access_token, refresh_token, org_id, doc_att_id, user_id):
+    headers = {"Access-Token": f"{access_token}"}
+    download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"
     download_response = requests.get(download_url, headers=headers)
+
     while download_response.status_code != 200:
-        await get_access(p_refresh)
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}"}
         download_response = requests.get(download_url, headers=headers)
+
     download_response_content = download_response.content
     download_response_title = download_response.headers.get("content-disposition")[22:-1]
     return {"file_title": download_response_title,
