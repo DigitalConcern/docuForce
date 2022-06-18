@@ -181,53 +181,6 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
     page_response = requests.get(page_url, headers=headers)
     while page_response.status_code != 200:
-        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
-        headers = {"Access-Token": f"{access_token}"}
-        page_response = requests.get(page_url, headers=headers)
-    len = page_response.headers.get("X-Total-Pages")
-    binary_img = page_response.text
-
-    doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
-    doc_response = requests.get(doc_url, headers=headers)
-    doc_response_json = doc_response.json()
-
-    try:
-        doc_task_id = doc_response_json["tasks"][0]["oguid"]
-        doc_task_type = doc_response_json["tasks"][0]["type"]
-    except:  # ругается на то что IndexError: list index out of range если нет задач по файлу
-        doc_task_id = ""
-        doc_task_type = ""
-
-    try:
-        doc_att_id = doc_response_json["documentAttachmentOguid"]
-    except KeyError:
-        doc_att_id = ""
-
-    task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
-    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-
-    type_response = requests.get(task_type_url, headers=headers)
-    types_response_json = type_response.json()
-
-    doc_task_name = ""
-    for type in types_response_json:
-        if type["type"] == doc_task_type:
-            doc_task_name = type["buttonCaption"]
-
-    return {"len": len,
-            "image_bin": binary_img,
-            "task_id": doc_task_id,
-            "task_type": doc_task_name,
-            "task_type_service": doc_task_type,
-            "doc_att_id": doc_att_id}
-
-
-async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, page):
-    headers = {"Access-Token": f"{access_token}"}
-
-    page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
-    page_response = requests.get(page_url, headers=headers)
-    while page_response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
         page_response = requests.get(page_url, headers=headers)

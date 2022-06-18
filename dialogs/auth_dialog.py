@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ParseMode
 
@@ -12,7 +14,8 @@ from bot import MyBot
 from database import ActiveUsers
 from .org_dialog import OrgSG
 from .menu_dialog import MenuSG
-from notifications import loop_notifications
+from notifications import loop_notifications_8hrs, loop_notifications_instant
+
 
 class AuthSG(StatesGroup):
     login = State()
@@ -25,7 +28,16 @@ async def start(m: Message, dialog_manager: DialogManager):
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
     else:
-        await loop_notifications()
+        eight_hour_notification = await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification")
+        instant_notification = await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification")
+        if not eight_hour_notification and not instant_notification:
+            await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
+            await loop_notifications_8hrs(user_id=m.from_user.id)
+        elif eight_hour_notification and len(asyncio.all_tasks()) == 0:
+            await loop_notifications_8hrs(user_id=m.from_user.id)
+        elif instant_notification and len(asyncio.all_tasks()) == 0:
+            await loop_notifications_instant(user_id=m.from_user.id)
+
         await dialog_manager.start(MenuSG.choose_action)
 
 
@@ -44,7 +56,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                          password=dialog_manager.current_context().dialog_data["password"])
 
     if resp:
-        user_org_id = await get_user_oguid(access_token=resp[0])
+        user_org_id = await get_user_oguid(access_token=resp[0], refresh_token=resp[1], user_id=m.from_user.id)
         await ActiveUsers(user_id=dialog_manager.current_context().dialog_data["id"],
                           user_org_id=user_org_id,
                           login=dialog_manager.current_context().dialog_data["login"],
@@ -54,7 +66,9 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           ).save()
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
-        await loop_notifications()
+
+        await loop_notifications_8hrs(user_id=m.from_user.id)
+
         await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:

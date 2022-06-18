@@ -9,7 +9,6 @@ from dialogs.view_doc_dialog import view_doc_dialog
 from dialogs.settings_dialog import settings_dialog
 from dialogs.list_doc_dialog import list_doc_dialog
 from dialogs.messages_dialog import messages_dialog
-from notifications import loop_notifications
 
 
 async def main():
