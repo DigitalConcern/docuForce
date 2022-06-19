@@ -1,7 +1,8 @@
 from typing import Dict
 from collections import defaultdict
 
-import requests
+import httpx
+# import await requests
 import datetime
 
 from database import ActiveUsers
@@ -16,7 +17,8 @@ async def sign_in(login, password) -> (str, str):
     }
     url = "https://im-api.df-backend-dev.dev.info-logistics.eu/signin"
 
-    response = requests.post(url, json=data, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.post(url=url, json=data, headers=headers)
 
     if response.status_code != 200:
         return False
@@ -31,13 +33,15 @@ async def get_user_oguid(access_token, refresh_token, user_id) -> str:
     headers = {"Access-Token": f"{access_token}"}
 
     url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
-
-    response = requests.get(url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers)
     user_oguid = response.json()["oguid"]
 
     while response.status_code != 200:
+
         await get_access(refresh_token=refresh_token, user_id=user_id)
-        response = requests.post(url, headers=headers)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.post(url=url, headers=headers)
         user_oguid = response.json()["oguid"]
 
     return user_oguid
@@ -49,8 +53,8 @@ async def get_access(refresh_token, user_id) -> str:
         "value": f"{refresh_token}",
     }
     url = "https://im-api.df-backend-dev.dev.info-logistics.eu/token-refresh"
-
-    response = requests.post(url, json=data, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.post(url=url, json=data, headers=headers)
 
     if response.status_code != 200:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("login", "password"))[0]
@@ -65,8 +69,8 @@ async def get_access(refresh_token, user_id) -> str:
 async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
     headers = {"Access-Token": f"{access_token}"}
     url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
-
-    response = requests.get(url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers)
 
     orgs = response.json()["orgs"]
     result = {}
@@ -77,7 +81,8 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
 
     while response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
-        response = requests.get(url, headers=headers)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers)
 
     return result
 
@@ -90,16 +95,18 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         'showMode': "NEED_TO_ACTION",
         'isCompleted': "false"
     }
-
-    response = requests.get(url, headers=headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        response = requests.get(url, headers=headers, params=params)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-    response_types = requests.get(types_url, headers=types_headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
 
     response_types_list = response_types.json()
     tasks = response.json()
@@ -130,7 +137,8 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         try:
             doc_key = str(task["document"]["type"])
             meta_url = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            meta_response = requests.get(meta_url, headers=headers)
+            async with httpx.AsyncClient() as requests:
+                meta_response = await requests.get(url=meta_url, headers=headers)
             try:
                 doc_name = meta_response.json()["titles"]["ru"]
             except KeyError:
@@ -179,17 +187,19 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     headers = {"Access-Token": f"{access_token}"}
 
     page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
-    page_response = requests.get(page_url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        page_response = await requests.get(url=page_url, headers=headers)
     while page_response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
-        page_response = requests.get(page_url, headers=headers)
+        page_response = await requests.get(url=page_url, headers=headers)
     len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
     # документа, при этом её больше особо ниоткуда не вытащишь
     # *****************, я в шоке
 
     doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
-    doc_response = requests.get(doc_url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        doc_response = await requests.get(url=doc_url, headers=headers)
     doc_response_json = doc_response.json()
 
     try:
@@ -206,7 +216,8 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
 
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    type_response = requests.get(task_type_url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        type_response = await requests.get(url=task_type_url, headers=headers)
     types_response_json = type_response.json()
 
     doc_task_name = ""
@@ -224,12 +235,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
 async def post_doc_action(access_token, refresh_token, org_id, task_id, action, user_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/complete"
-    action_response = requests.post(url, headers=headers, json={"result": action})
+    async with httpx.AsyncClient() as requests:
+        action_response = await requests.post(url=url, headers=headers, json={"result": action})
 
     while (action_response.status_code == 400) or (action_response.status_code == 500):
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        action_response = requests.post(url, headers=headers, json={"result": action})
+        async with httpx.AsyncClient() as requests:
+            action_response = await requests.post(url=url, headers=headers, json={"result": action})
 
     if action_response.status_code == 409:
         for error in action_response.json():
@@ -239,12 +252,14 @@ async def post_doc_action(access_token, refresh_token, org_id, task_id, action, 
 async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_id):
     headers = {"Access-Token": f"{access_token}"}
     certif_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/certificate"
-    certif_response = requests.get(certif_url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        certif_response = await requests.get(url=certif_url, headers=headers)
 
     while certif_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
-        certif_response = requests.get(certif_url, headers=headers)
+        async with httpx.AsyncClient() as requests:
+            certif_response = await requests.get(url=certif_url, headers=headers)
 
     try:
         certif_id = certif_response.json()["oguid"]
@@ -261,11 +276,13 @@ async def post_hash(access_token, refresh_token, org_id, standard, att_doc_id, u
     data = {"standard": standard,
             "attachmentOguid": att_doc_id}
 
-    hash_response = requests.post(hash_url, headers=headers, json=data)
+    async with httpx.AsyncClient() as requests:
+        hash_response = await requests.post(url=hash_url, headers=headers, json=data)
     while hash_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        hash_response = requests.post(hash_url, headers=headers, json=data)
+        async with httpx.AsyncClient() as requests:
+            hash_response = await requests.post(url=hash_url, headers=headers, json=data)
     try:
         hash = hash_response.json()["hash"]
     except KeyError:
@@ -295,17 +312,20 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
     sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
     sign_data = {"hash": hash}
-    action_response = requests.post(sign_url, headers=headers, json=sign_data)
+    async with httpx.AsyncClient() as requests:
+        action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
 
     while action_response.status_code != 201:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        action_response = requests.post(sign_url, headers=headers, json=sign_data)
+        async with httpx.AsyncClient() as requests:
+            action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
 
     add_sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
     add_sign_data = {"oguid": action_response.text[1:-1],
                      "comment": ""}
-    add_sign_response = requests.post(add_sign_url, headers=headers, json=add_sign_data)
+    async with httpx.AsyncClient() as requests:
+        add_sign_response = await requests.post(url=add_sign_url, headers=headers, json=add_sign_data)
 
     print(add_sign_response)
     return "SUCCESS"
@@ -320,15 +340,17 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     else:
         params = {"query.like": contained_string}
 
-    response = requests.get(url, headers=headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        response = requests.get(url, headers=headers, params=params)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-    response_types = requests.get(types_url, headers=types_headers, params=params)
+    response_types = await requests.get(url=types_url, headers=types_headers, params=params)
 
     result = []
     resp_list = response.json()
@@ -357,7 +379,8 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         try:
             doc_key = str(resp["type"])
             metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            meta_response = requests.get(metaurl, headers=headers)
+            async with httpx.AsyncClient() as requests:
+                meta_response = await requests.get(url=metaurl, headers=headers)
             try:
                 doc_name = meta_response.json()["titles"]["ru"]
             except KeyError:
@@ -408,15 +431,18 @@ async def get_messages_dict(access_token, refresh_token, org_id, user_id):
     params = {'showMode': "TODOS_ONLY",
               'isCompleted': "false"}
 
-    response = requests.get(url, headers=headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        response = requests.get(url, headers=headers, params=params)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-    response_types = requests.get(types_url, headers=types_headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
 
     response_types_list = response_types.json()
     conversations = response.json()
@@ -447,7 +473,8 @@ async def get_messages_dict(access_token, refresh_token, org_id, user_id):
         try:
             doc_key = str(conversation["document"]["type"])
             metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            meta_response = requests.get(metaurl, headers=headers)
+            async with httpx.AsyncClient() as requests:
+                meta_response = await requests.get(url=metaurl, headers=headers)
             try:
                 doc_name = meta_response.json()["titles"]["ru"] + " "
             except KeyError:
@@ -515,11 +542,13 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
         "description": answer
     }
 
-    response = requests.post(url, headers=headers, json=json)
+    async with httpx.AsyncClient() as requests:
+        response = await requests.post(url=url, headers=headers, json=json)
     while response.status_code != 201:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        response = requests.post(url, headers=headers, json=json)
+        async with httpx.AsyncClient() as requests:
+            response = await requests.post(url=url, headers=headers, json=json)
 
     return "SUCCESS"
 
@@ -527,12 +556,14 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
 async def get_file(access_token, refresh_token, org_id, doc_att_id, user_id):
     headers = {"Access-Token": f"{access_token}"}
     download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"
-    download_response = requests.get(download_url, headers=headers)
+    async with httpx.AsyncClient() as requests:
+        download_response = await requests.get(url=download_url, headers=headers)
 
     while download_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
-        download_response = requests.get(download_url, headers=headers)
+        async with httpx.AsyncClient() as requests:
+            download_response = await requests.get(url=download_url, headers=headers)
 
     download_response_content = download_response.content
     download_response_title = download_response.headers.get("content-disposition")[22:-1]
