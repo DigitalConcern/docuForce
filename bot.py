@@ -15,6 +15,24 @@ from aiogram_dialog.widgets.when import WhenCondition
 
 from config import API_TOKEN
 
+class SuperMediaAttachment:
+    def __init__(
+            self,
+            type: ContentType,
+            url: Optional[str] = None,
+            url_headers: Optional[str]=None,
+            path: Optional[str] = None,
+            file_id: Optional[MediaId] = None,
+            **kwargs,
+    ):
+        if not (url or path or file_id):
+            raise ValueError("Neither url nor path not file_id are provided")
+        self.type = type
+        self.url = url
+        self.url_headers=url_headers
+        self.path = path
+        self.file_id = file_id
+        self.kwargs = kwargs
 
 class DynamicMedia(Media):
     def __init__(
@@ -40,8 +58,8 @@ class DynamicMedia(Media):
             self,
             data: Any,
             manager: DialogManager
-    ) -> Optional[MediaAttachment]:
-        return MediaAttachment(
+    ) -> Optional[SuperMediaAttachment]:
+        return SuperMediaAttachment(
             type=self.type,
             url=self.url.format_map(data),
             url_headers={"Access-Token": self.url_headers.format_map(data)},
