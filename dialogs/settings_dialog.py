@@ -59,7 +59,7 @@ async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, 
 settings_dialog = Dialog(
     Window(
         StaticMedia(
-            path="resources/sett1.png",
+            path="resources/sett2.png",
             type=ContentType.PHOTO
         ),
         Start(Const("Сменить организацию"), id="change_org", state=OrgSG.choose_org),
