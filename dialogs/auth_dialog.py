@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import CancelledError
 
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ParseMode
@@ -34,12 +35,20 @@ async def start(m: Message, dialog_manager: DialogManager):
             await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
             await loop_notifications_8hrs(user_id=m.from_user.id)
         elif eight_hour_notification:
-            for task in asyncio.all_tasks():
-                task.done()
+            try:
+                for task in asyncio.all_tasks():
+                    if task.get_name() == str(m.from_user.id):
+                        task.cancel()
+            except CancelledError:
+                pass
             await loop_notifications_8hrs(user_id=m.from_user.id)
         elif instant_notification:
-            for task in asyncio.all_tasks():
-                task.done()
+            try:
+                for task in asyncio.all_tasks():
+                    if task.get_name() == str(m.from_user.id):
+                        task.cancel()
+            except CancelledError:
+                pass
             await loop_notifications_instant(user_id=m.from_user.id)
 
         await dialog_manager.start(MenuSG.choose_action)
