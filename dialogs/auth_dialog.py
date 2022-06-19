@@ -28,14 +28,18 @@ async def start(m: Message, dialog_manager: DialogManager):
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
     else:
-        eight_hour_notification = await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification")
-        instant_notification = await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification")
+        eight_hour_notification = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
+        instant_notification = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
         if not eight_hour_notification and not instant_notification:
             await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
             await loop_notifications_8hrs(user_id=m.from_user.id)
-        elif eight_hour_notification and len(asyncio.all_tasks()) == 0:
+        elif eight_hour_notification:
+            for task in asyncio.all_tasks():
+                task.done()
             await loop_notifications_8hrs(user_id=m.from_user.id)
-        elif instant_notification and len(asyncio.all_tasks()) == 0:
+        elif instant_notification:
+            for task in asyncio.all_tasks():
+                task.done()
             await loop_notifications_instant(user_id=m.from_user.id)
 
         await dialog_manager.start(MenuSG.choose_action)

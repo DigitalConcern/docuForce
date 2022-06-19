@@ -45,7 +45,7 @@ async def msg_8hrs(user_id):
 
 async def msg_instant(user_id):
     while True:
-        await asyncio.sleep(5*60)
+        await asyncio.sleep(20)
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
                                                                       "tasks_amount"))[0]
         refresh_token, access_token, organization, tasks_amount = data[0], data[1], data[2], data[3]

@@ -122,8 +122,6 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                       task_id=dialog_manager.current_context().dialog_data["task_id"],
                                       action=data,
                                       user_id=c.from_user.id)
-                tasks_amount = (await ActiveUsers.filter(user_id=c.from_user.id).values_list("tasks_amount", flat=True))[0]
-                await ActiveUsers.filter(user_id=c.from_user.id).update(tasks_amount=tasks_amount - 1)
             else:
                 await post_doc_sign(access_token=access_token,
                                     refresh_token=refresh_token,
@@ -132,14 +130,10 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                     att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
                                     doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
                                     user_id=dialog_manager.event.from_user.id)
-                tasks_amount = (await ActiveUsers.filter(user_id=c.from_user.id).values_list("tasks_amount", flat=True))[0]
-                await ActiveUsers.filter(user_id=c.from_user.id).update(tasks_amount=tasks_amount - 1)
         case "no":
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
-            tasks_amount = (await ActiveUsers.filter(user_id=c.from_user.id).values_list("tasks_amount", flat=True))[0]
-            await ActiveUsers.filter(user_id=c.from_user.id).update(tasks_amount=tasks_amount - 1)
 
     await dialog_manager.done()
 
@@ -150,7 +144,7 @@ async def download_file(c: CallbackQuery, button: Button, dialog_manager: Dialog
                                                                                         "current_document_id",
                                                                                         "organization"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
-    file_text = await get_file(p_access=access_token, p_refresh=refresh_token, org_code=organization,
+    file_text = await get_file(access_token=access_token, refresh_token=refresh_token, org_id=organization,
                                doc_att_id=dialog_manager.current_context().dialog_data["doc_att_id"])
     file = InputFile(filename=file_text["file_title"], path_or_bytesio=BytesIO(file_text["file_content_bytes"]))
     await MyBot.bot.send_document(chat_id=c.from_user.id, document=file)
