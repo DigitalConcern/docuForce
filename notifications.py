@@ -52,9 +52,9 @@ async def msg_8hrs(user_id):
                         case 1:
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новое сообщение!")
                         case 2, 3, 4:
-                            await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщения!")
+                            await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                         case _:
-                            await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщений!")
+                            await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
             else:
                 await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
@@ -105,9 +105,9 @@ async def msg_instant(user_id):
                     case 1:
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новое сообщение!")
                     case 2, 3, 4:
-                        await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщения!")
+                        await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                     case _:
-                        await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщений!")
+                        await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
         # else:
         #     await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 
