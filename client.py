@@ -350,7 +350,8 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
 
     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-    response_types = await requests.get(url=types_url, headers=types_headers, params=params)
+    async with httpx.AsyncClient() as requests:
+        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
 
     result = []
     resp_list = response.json()
