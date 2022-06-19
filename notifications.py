@@ -6,15 +6,18 @@ from database import ActiveUsers
 
 async def msg_8hrs(user_id):
     while True:
-        await asyncio.sleep(8 * 60 * 60)
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
                                                                       "tasks_amount"))[0]
         refresh_token, access_token, organization, tasks_amount = data[0], data[1], data[2], data[3]
+
+        await asyncio.sleep(8 * 60 * 60)
 
         new_tasks_amount = len(await get_tasks_dict(user_id=user_id,
                                                     refresh_token=refresh_token,
                                                     access_token=access_token,
                                                     org_id=organization))
+
+        await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount)
 
         diff = new_tasks_amount - tasks_amount
         if diff > 0:
@@ -45,14 +48,18 @@ async def msg_8hrs(user_id):
 
 async def msg_instant(user_id):
     while True:
-        await asyncio.sleep(20)
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
                                                                       "tasks_amount"))[0]
         refresh_token, access_token, organization, tasks_amount = data[0], data[1], data[2], data[3]
+
+        await asyncio.sleep(20)
+
         new_tasks_amount = len(await get_tasks_dict(user_id=user_id,
                                                     refresh_token=refresh_token,
                                                     access_token=access_token,
                                                     org_id=organization))
+
+        await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount)
 
         diff = new_tasks_amount - tasks_amount
         if diff > 0:
