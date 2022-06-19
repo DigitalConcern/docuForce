@@ -1,5 +1,6 @@
 import asyncio
 import operator
+from asyncio import CancelledError
 
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ParseMode, ContentType
@@ -34,14 +35,22 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
 async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, item_id: str):
     if item_id == '0':
-        for task in asyncio.all_tasks():
-            task.done()
+        try:
+            for task in asyncio.all_tasks():
+                if task.get_name() == str(event.from_user.id):
+                    task.cancel()
+        except CancelledError:
+            pass
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=False)
         await loop_notifications_8hrs(user_id=event.from_user.id)
     if item_id == '1':
-        for task in asyncio.all_tasks():
-            task.done()
+        try:
+            for task in asyncio.all_tasks():
+                if task.get_name() == str(event.from_user.id):
+                    task.cancel()
+        except CancelledError:
+            pass
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=False)
         await loop_notifications_instant(user_id=event.from_user.id)

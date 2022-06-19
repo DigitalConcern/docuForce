@@ -36,7 +36,7 @@ async def msg_8hrs(user_id):
                     match diff_tasks % 10:
                         case 1:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новая задача!")
-                        case 2, 3, 4:
+                        case 2 | 3 | 4:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
@@ -51,12 +51,12 @@ async def msg_8hrs(user_id):
                     match diff_msg % 10:
                         case 1:
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новое сообщение!")
-                        case 2, 3, 4:
+                        case 2 | 3 | 4:
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                         case _:
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
             else:
-                await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
+                await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 
             counter = 0
         await asyncio.sleep(5 * 60)
@@ -89,7 +89,7 @@ async def msg_instant(user_id):
                 match diff_tasks % 10:
                     case 1:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новая задача!")
-                    case 2, 3, 4:
+                    case 2 | 3 | 4:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
@@ -104,7 +104,7 @@ async def msg_instant(user_id):
                 match diff_msg % 10:
                     case 1:
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новое сообщение!")
-                    case 2, 3, 4:
+                    case 2 | 3 | 4:
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
@@ -114,9 +114,9 @@ async def msg_instant(user_id):
 
 async def loop_notifications_8hrs(user_id):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_8hrs(user_id=user_id))
+    loop.create_task(msg_8hrs(user_id=user_id), name=str(user_id))
 
 
 async def loop_notifications_instant(user_id):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_instant(user_id=user_id))
+    loop.create_task(msg_instant(user_id=user_id), name=str(user_id))

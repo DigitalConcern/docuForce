@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import ContentType
 from aiogram_dialog import DialogRegistry
-from aiogram_dialog.manager.protocols import MediaAttachment, MediaId, DialogManager
+from aiogram_dialog.manager.protocols import MediaId, DialogManager
 from aiogram_dialog.message_manager import MessageManager
 from aiogram_dialog.widgets.media import Media
 from aiogram_dialog.widgets.when import WhenCondition
