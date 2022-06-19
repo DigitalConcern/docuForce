@@ -144,7 +144,8 @@ async def download_file(c: CallbackQuery, button: Button, dialog_manager: Dialog
                                                                                         "organization"))[0]
     refresh_token, access_token, current_document_id, organization = data[0], data[1], data[2], data[3]
     file_text = await get_file(access_token=access_token, refresh_token=refresh_token, org_id=organization,
-                               doc_att_id=dialog_manager.current_context().dialog_data["doc_att_id"])
+                               doc_att_id=dialog_manager.current_context().dialog_data["doc_att_id"],
+                               user_id=c.from_user.id)
     file = InputFile(filename=file_text["file_title"], path_or_bytesio=BytesIO(file_text["file_content_bytes"]))
     await MyBot.bot.send_document(chat_id=c.from_user.id, document=file)
 
