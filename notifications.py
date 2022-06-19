@@ -20,6 +20,7 @@ async def msg_8hrs(user_id):
                                                     refresh_token=refresh_token,
                                                     access_token=access_token,
                                                     org_id=organization))
+
         new_msg_amount = len(await get_messages_dict(user_id=user_id,
                                                      refresh_token=refresh_token,
                                                      access_token=access_token,

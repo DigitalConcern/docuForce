@@ -29,11 +29,11 @@ async def run():
                 "default": {
                     "engine": "tortoise.backends.asyncpg",
                     "credentials": {
-                        "database": "postgres",
-                        "host": "localhost",
-                        "password": "12345",
+                        "database": "d21crbfi20lfgt",
+                        "host": "ec2-52-212-228-71.eu-west-1.compute.amazonaws.com",
+                        "password": "78ebf737332e11b62f868e64a5a1445d523d768b95deb51b148127f01ee0b026",
                         "port": 5432,
-                        "user": "postgres"
+                        "user": "ifkppiqumhvrja"
                     }
                 }
             },
