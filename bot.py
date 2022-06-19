@@ -1,16 +1,53 @@
 import base64
 import logging
 from io import BytesIO
-from typing import IO, Union, Optional
+from typing import IO, Union, Optional, Dict, Any
 
 import requests
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.types import ContentType
 from aiogram_dialog import DialogRegistry
-from aiogram_dialog.manager.protocols import MediaAttachment, MediaId
+from aiogram_dialog.manager.protocols import MediaAttachment, MediaId, DialogManager
 from aiogram_dialog.message_manager import MessageManager
+from aiogram_dialog.widgets.media import Media
+from aiogram_dialog.widgets.when import WhenCondition
 
 from config import API_TOKEN
+
+
+class DynamicMedia(Media):
+    def __init__(
+            self,
+            *,
+            path: Optional[str] = None,
+            url: Optional[str] = None,
+            url_headers: Optional[str] = None,
+            type: ContentType = ContentType.PHOTO,
+            media_params: Dict = None,
+            when: WhenCondition = None,
+    ):
+        super().__init__(when)
+        if not (url or path):
+            raise ValueError("Neither url nor path are provided")
+        self.type = type
+        self.path = path
+        self.url = url
+        self.url_headers = url_headers
+        self.media_params = media_params or {}
+
+    async def _render_media(
+            self,
+            data: Any,
+            manager: DialogManager
+    ) -> Optional[MediaAttachment]:
+        return MediaAttachment(
+            type=self.type,
+            url=self.url.format_map(data),
+            url_headers={"Access-Token": self.url_headers.format_map(data)},
+            path=self.path,
+            **self.media_params,
+        )
 
 
 class SuperMesssageManager(MessageManager):

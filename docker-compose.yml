@@ -1,9 +1,14 @@
 postgresql:
   image: postgres:latest
-  ports:
-    - "5433:5432"
 
 project:
   build: ./
+  command: python -u main.py
+  volumes:
+    - ./dialogs
+    - ./resources
+    - ./venv
   depends_on:
+    - postgresql
+  links:
     - postgresql
