@@ -8,11 +8,10 @@ from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMo
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
 from aiogram_dialog.widgets.media import StaticMedia
-from aiogram_dialog.widgets.media.static import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 import os
 
-from bot import MyBot
+from bot import MyBot, DynamicMedia
 from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict, get_file
 from database import ActiveUsers
 

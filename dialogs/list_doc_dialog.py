@@ -6,7 +6,7 @@ from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMo
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
 from aiogram_dialog.widgets.media import StaticMedia
-from aiogram_dialog.widgets.media.static import DynamicMedia
+from bot import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
 from database import ActiveUsers

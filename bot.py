@@ -15,12 +15,13 @@ from aiogram_dialog.widgets.when import WhenCondition
 
 from config import API_TOKEN
 
+
 class SuperMediaAttachment:
     def __init__(
             self,
             type: ContentType,
             url: Optional[str] = None,
-            url_headers: Optional[str]=None,
+            url_headers: Optional[str] = None,
             path: Optional[str] = None,
             file_id: Optional[MediaId] = None,
             **kwargs,
@@ -29,10 +30,11 @@ class SuperMediaAttachment:
             raise ValueError("Neither url nor path not file_id are provided")
         self.type = type
         self.url = url
-        self.url_headers=url_headers
+        self.url_headers = url_headers
         self.path = path
         self.file_id = file_id
         self.kwargs = kwargs
+
 
 class DynamicMedia(Media):
     def __init__(
@@ -69,7 +71,7 @@ class DynamicMedia(Media):
 
 
 class SuperMesssageManager(MessageManager):
-    async def get_media_source(self, media: MediaAttachment) -> Union[IO, str]:
+    async def get_media_source(self, media: SuperMediaAttachment) -> Union[IO, str]:
         if media.file_id:
             return media.file_id.file_id
         if media.url:

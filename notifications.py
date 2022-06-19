@@ -93,8 +93,8 @@ async def msg_instant(user_id):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
-        else:
-            await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
+        # else:
+        #     await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
         diff_msg = new_msg_amount - messages_amount
         if diff_msg > 0:
@@ -108,8 +108,8 @@ async def msg_instant(user_id):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщения!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_msg} новых сообщений!")
-        else:
-            await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
+        # else:
+        #     await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 
 
 async def loop_notifications_8hrs(user_id):
