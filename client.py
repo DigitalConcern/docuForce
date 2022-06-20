@@ -117,22 +117,22 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         try:
             cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
                 task["document"]["fields"]["currency"]) + "\n "
-        except KeyError:
+        except :
             cost = ""
         try:
             org__name = task["document"]["fields"]["contractor"] + "\n"
-        except KeyError:
+        except :
             org__name = ""
         try:
             data = " От " + datetime.datetime.fromtimestamp(
                 task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
-        except KeyError:
+        except :
             data = ""
         try:
             doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
             if data == "":
                 doc_index += "\n"
-        except KeyError:
+        except :
             doc_index = ""
         try:
             doc_key = str(task["document"]["type"])
@@ -141,10 +141,10 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                 meta_response = await requests.get(url=meta_url, headers=headers)
             try:
                 doc_name = meta_response.json()["titles"]["ru"]
-            except KeyError:
+            except :
                 try:
                     doc_name = meta_response.json()["title"]
-                except KeyError:
+                except :
                     doc_name = meta_response.json()["titles"]["en"]
             other_fields = ""
             try:
@@ -155,13 +155,13 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                         try:
                             other_fields += field["component"]["label"] + ": " + str(
                                 task["document"]["fields"][field["key"]])
-                        except KeyError:
+                        except :
                             other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                 task["document"]["fields"][field["key"]]) + "\n"
                         print(other_fields)
-            except KeyError:
+            except :
                 pass
-        except KeyError:
+        except :
             doc_name = ""
         stage = "\n\n" + f"<i>Завершено</i>"
         for stage_type in response_types_list:
@@ -264,7 +264,7 @@ async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_
     try:
         certif_id = certif_response.json()["oguid"]
         certif_standard = certif_response.json()["standard"]
-    except KeyError:
+    except :
         certif_id = ""
         certif_standard = ""
     return certif_id, certif_standard
