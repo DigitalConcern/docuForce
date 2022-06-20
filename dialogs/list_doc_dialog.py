@@ -6,7 +6,7 @@ from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMo
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
 from aiogram_dialog.widgets.media import StaticMedia
-from bot import DynamicMedia
+from bot import DynamicMedia, MyBot
 from aiogram_dialog.widgets.text import Const, Format
 
 from database import ActiveUsers
@@ -20,6 +20,8 @@ class ListDocSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id=(await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id,text="Загрузка...")).message_id
+
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
@@ -45,6 +47,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         micro_text = f"{doc[1]} {doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}{doc[7]}"
         text.append(micro_text)
         doc_ids.append(doc[5])
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if len(text) == 0:
         if dialog_manager.current_context().dialog_data["find_string_doc"] == "":

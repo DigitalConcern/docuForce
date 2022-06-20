@@ -20,6 +20,8 @@ class OrgSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token"))[0]
     refresh_token, access_token = data[0], data[1]
 
@@ -31,6 +33,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         orgs_list += f'{key}. {orgs_dict[key][0]}\n'
     dialog_manager.current_context().dialog_data["organization_dict"] = orgs_dict
     # dialog_manager.current_context().dialog_data["organization_list"] = orgs_list
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     return {
         'organization_keys': orgs_dict.keys(),

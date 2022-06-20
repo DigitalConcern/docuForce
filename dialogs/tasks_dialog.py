@@ -14,6 +14,8 @@ from dialogs.view_doc_dialog import ViewDocSG
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
@@ -34,6 +36,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if len(text) == 0:
         current_page = "На данный момент у Вас нет активных задач!"

@@ -21,6 +21,8 @@ class ViewDocSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "current_document_id",
@@ -60,6 +62,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["yes_name"] = doc["task_type"]
         dialog_manager.current_context().dialog_data["task_id"] = doc["task_id"]
         dialog_manager.current_context().dialog_data["task_type_service"] = doc["task_type_service"]
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     return {
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
