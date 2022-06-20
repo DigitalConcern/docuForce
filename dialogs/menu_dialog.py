@@ -15,6 +15,7 @@ from bot import MyBot
 from database import ActiveUsers
 from notifications import loop_notifications_8hrs, loop_notifications_instant
 from .auth_dialog import AuthSG
+from .messages_dialog import MessagesSG
 from .tasks_dialog import TasksSG
 from .list_doc_dialog import ListDocSG
 from .settings_dialog import SettingsSG
@@ -39,12 +40,18 @@ class MenuSG(StatesGroup):
 #     ),
 #     launch_mode=LaunchMode.ROOT
 # )
+async def kill_start_instant(m):
+    for task in asyncio.all_tasks():
+        if task.get_name() == str(m.from_user.id):
+            task.cancel()
+    await loop_notifications_instant(user_id=m.from_user.id)
 
 async def tasks(m: Message, dialog_manager: DialogManager):
     if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        await kill_start_instant(m)
         await dialog_manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
 
 
@@ -53,6 +60,7 @@ async def document_search(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        await kill_start_instant(m)
         await dialog_manager.start(ListDocSG.find, mode=StartMode.RESET_STACK)
 
 
@@ -61,6 +69,7 @@ async def document_list(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        await kill_start_instant(m)
         await dialog_manager.start(ListDocSG.choose_action, mode=StartMode.RESET_STACK)
 
 
@@ -69,6 +78,7 @@ async def settings(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        await kill_start_instant(m)
         await dialog_manager.start(SettingsSG.choose_action, mode=StartMode.RESET_STACK)
 
 
@@ -77,7 +87,8 @@ async def messages(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
-        await dialog_manager.start(SettingsSG.choose_action, mode=StartMode.RESET_STACK)
+        await kill_start_instant(m)
+        await dialog_manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
 
 
 MyBot.register_handler(method=tasks, commands="tasks", state="*")

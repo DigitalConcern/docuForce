@@ -165,7 +165,7 @@ messages_dialog = Dialog(
                    on_click=switch_pages),
 
         ),
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=MessagesSG.choose_action,
         getter=get_data,
         parse_mode=ParseMode.HTML

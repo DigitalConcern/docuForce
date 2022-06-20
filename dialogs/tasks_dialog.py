@@ -153,7 +153,7 @@ tasks_dialog = Dialog(
                    when="is_not_last",
                    on_click=switch_pages),
         ),
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=TasksSG.choose_action,
         getter=get_data,
         parse_mode=ParseMode.HTML
