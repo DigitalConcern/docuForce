@@ -13,6 +13,7 @@ from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Star
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format
 
+from bot import MyBot
 from .org_dialog import OrgSG
 from database import ActiveUsers
 from notifications import loop_notifications_8hrs, loop_notifications_instant
@@ -24,7 +25,12 @@ class SettingsSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     radio = dialog_manager.dialog().find("notifications")
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
+
     if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1"):
         if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification", flat=True))[0]:
             await radio.set_checked(item_id="0", event=dialog_manager.event)

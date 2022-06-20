@@ -19,6 +19,8 @@ class MessagesSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
@@ -53,6 +55,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         doc_ids.append(conversation)
         entity_ids.append(conversations_dict[conversation][8])
         user_ids.append(conversations_dict[conversation][9])
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if len(text) == 0:
         current_page = "На данный момент у Вас нет сообщений!"
