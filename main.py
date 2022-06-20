@@ -1,4 +1,6 @@
 import asyncio
+
+import database
 from bot import MyBot
 from database import loop_db
 from dialogs.org_dialog import org_dialog
@@ -23,6 +25,8 @@ async def main():
 
     await loop_db()
     await MyBot.run_bot()
+    for user_id in database.ActiveUsers.get("user_id"):
+        await MyBot.bot.send_message(chat_id=user_id,text="Бот перезапущен! Чтобы продолжить работу - отправьте команду /start")
 
 
 if __name__ == '__main__':

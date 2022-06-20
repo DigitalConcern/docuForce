@@ -8,6 +8,7 @@ from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Star
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format
 
+from bot import MyBot
 from database import ActiveUsers
 from .view_doc_dialog import ViewDocSG
 from client import get_messages_dict, post_message_answer
