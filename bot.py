@@ -81,9 +81,6 @@ class SuperMesssageManager(MessageManager):
             if response.status_code != 200:
                 return open(pathlib.Path("./resources/white.png"), "rb")
             return BytesIO(base64.b64decode(response.text))
-
-
-
         else:
             return open(media.path, "rb")
 
