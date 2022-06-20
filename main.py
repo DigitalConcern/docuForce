@@ -24,9 +24,11 @@ async def main():
     MyBot.register_dialogs(messages_dialog)
 
     await loop_db()
-    await MyBot.run_bot()
-    for user_id in database.ActiveUsers.get("user_id"):
+    await asyncio.sleep(2)
+    for user_id in (await database.ActiveUsers.filter().values_list("user_id", flat=True))[0]:
         await MyBot.bot.send_message(chat_id=user_id,text="Бот перезапущен! Чтобы продолжить работу - отправьте команду /start")
+    await MyBot.run_bot()
+
 
 
 if __name__ == '__main__':
