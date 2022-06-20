@@ -92,7 +92,11 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'org_id': dialog_manager.current_context().dialog_data.get("org_id", organization),
             'access_token': dialog_manager.current_context().dialog_data.get("access_token", access_token),
             'current_doc_id': dialog_manager.current_context().dialog_data.get("current_doc_id", 0),
-            'have_documents': True
+            'have_documents': True,
+            'counter': dialog_manager.current_context().dialog_data.get("counter", 0),
+            'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0)+1,
+            'len':dialog_manager.current_context().dialog_data.get("len", len(text)),
+            'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", len(text)),
         }
 
 
@@ -151,18 +155,30 @@ list_doc_dialog = Dialog(
             id="doc",
             on_click=go_to_doc
         ),
-        Row(
 
-            Button(Format("<<"),
-                   when="is_not_first",
-                   id="minus",
-                   on_click=switch_pages),
-            Button(Format(">>"),
-                   id="plus",
-                   when="is_not_last",
-                   on_click=switch_pages),
+            Row(
+                Button(Format("1<<"),
+                       when="is_not_first",
+                       id="first",
+                       on_click=switch_pages),
+                Button(Format("<"),
+                       when="is_not_first",
+                       id="minus",
+                       on_click=switch_pages),
+                Button(Format("{user_counter}"),
+                       when="is_not_one",
+                       id="curr"),
+                Button(Format(">"),
+                       id="plus",
+                       when="is_not_last",
+                       on_click=switch_pages),
+                Button(Format(">>{len}"),
+                       id="fin",
+                       when="is_not_last",
+                       on_click=switch_pages),
+            ),
 
-        ),
+
         Cancel(Const("⏪ Назад")),
         state=ListDocSG.choose_action,
         getter=get_data,
