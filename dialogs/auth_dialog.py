@@ -14,7 +14,6 @@ from client import sign_in, get_user_oguid
 from bot import MyBot
 from database import ActiveUsers
 from .org_dialog import OrgSG
-from .menu_dialog import MenuSG
 from notifications import loop_notifications_8hrs, loop_notifications_instant
 
 
@@ -37,9 +36,9 @@ async def start(m: Message, dialog_manager: DialogManager):
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
     else:
         eight_hour_notification = \
-        (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
+            (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
         instant_notification = \
-        (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
+            (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
         if not eight_hour_notification and not instant_notification:
             await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
             await loop_notifications_8hrs(user_id=m.from_user.id)
@@ -60,8 +59,6 @@ async def start(m: Message, dialog_manager: DialogManager):
                 pass
             await loop_notifications_instant(user_id=m.from_user.id)
 
-        await dialog_manager.start(MenuSG.choose_action)
-
 
 MyBot.register_handler(method=start, commands="start", state="*")
 
@@ -79,8 +76,10 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
     resp = await sign_in(login=dialog_manager.current_context().dialog_data["login"],
                          password=dialog_manager.current_context().dialog_data["password"])
 
-    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=dialog_manager.current_context().dialog_data["login_id"])
-    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=dialog_manager.current_context().dialog_data["password_id"])
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id,
+                                   message_id=dialog_manager.current_context().dialog_data["login_id"])
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id,
+                                   message_id=dialog_manager.current_context().dialog_data["password_id"])
 
     if resp:
         user_org_id = await get_user_oguid(access_token=resp[0], refresh_token=resp[1], user_id=m.from_user.id)
@@ -92,13 +91,11 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           access_token=resp[0]
                           ).save()
 
-
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
 
         await loop_notifications_8hrs(user_id=m.from_user.id)
 
-        await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:
         await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль\nПопробуйте еще раз!",

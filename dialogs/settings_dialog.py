@@ -20,7 +20,7 @@ from notifications import loop_notifications_8hrs, loop_notifications_instant
 
 
 class SettingsSG(StatesGroup):
-    change_org = State()
+    choose_action = State()
     notifics = State()
 
 
@@ -68,10 +68,10 @@ settings_dialog = Dialog(
             path="resources/sett2.png",
             type=ContentType.PHOTO
         ),
-        Start(Const("Сменить организацию"), id="change_org", state=OrgSG.choose_org),
+        Start(Const("Сменить организацию"), id="choose_action", state=OrgSG.choose_org),
         SwitchTo(Const("Уведомления"), id="notifics", state=SettingsSG.notifics),
         Cancel(Const("⏪ Назад")),
-        state=SettingsSG.change_org
+        state=SettingsSG.choose_action
     ),
     Window(
         Const("Выберите удобный для Вас режим уведомлений 🔔"),
