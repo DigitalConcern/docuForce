@@ -58,16 +58,21 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
         if dialog_manager.current_context().dialog_data["find_string_doc"] == "":
             current_doc = "На данный момент у Вас нет документов!"
+            dialog_manager.current_context().dialog_data["current_doc"] = "На данный момент у Вас нет документов!"
         else:
             current_doc = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
+            dialog_manager.current_context().dialog_data["current_doc"] = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
         return {
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", current_doc),
             'is_not_first': False,
             'is_not_last': False,
-            'have_documents': False
+            'have_documents': False,
+            'org_id': dialog_manager.current_context().dialog_data.get("org_id", organization),
+            'current_doc_id': dialog_manager.current_context().dialog_data.get("current_doc_id", 0),
+            'access_token': dialog_manager.current_context().dialog_data.get("access_token", access_token),
         }
     else:
-        if len(text) <= 1:
+        if len(text) == 1:
             dialog_manager.current_context().dialog_data["is_not_last"] = False
 
         dialog_manager.current_context().dialog_data["text"] = text

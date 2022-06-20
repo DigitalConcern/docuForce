@@ -47,6 +47,31 @@ async def run():
     )
     await Tortoise.generate_schemas()
 
+# async def run():
+#     await Tortoise.init(
+#         config={
+#             "connections": {
+#                 "default": {
+#                     "engine": "tortoise.backends.asyncpg",
+#                     "credentials": {
+#                         "database": "postgres",
+#                         "host": "localhost",
+#                         "password": "12345",
+#                         "port": 5432,
+#                         "user": "postgres"
+#                     }
+#                 }
+#             },
+#             "apps": {
+#                 "models": {
+#                     "models": ["database"],
+#                     "default_connection": "default",
+#                 }
+#             },
+#         }
+#     )
+#     await Tortoise.generate_schemas()
+
 
 async def loop_db():
     loop = asyncio.get_event_loop()
