@@ -23,14 +23,23 @@ class AuthSG(StatesGroup):
     password = State()
 
 
+# async def get_data(dialog_manager: DialogManager, **kwargs):
+#     return {
+#         'login_msg_id': dialog_manager.current_context().dialog_data.get("current_page", 0),
+#         'password_msg_id': dialog_manager.current_context().dialog_data.get("is_not_first", 0),
+#     }
+
+
 async def start(m: Message, dialog_manager: DialogManager):
     if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
         dialog_manager.current_context().dialog_data["id"] = m.from_user.id
     else:
-        eight_hour_notification = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
-        instant_notification = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
+        eight_hour_notification = \
+        (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
+        instant_notification = \
+        (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
         if not eight_hour_notification and not instant_notification:
             await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
             await loop_notifications_8hrs(user_id=m.from_user.id)
@@ -59,14 +68,19 @@ MyBot.register_handler(method=start, commands="start", state="*")
 
 async def login_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["login"] = m.text
+    dialog_manager.current_context().dialog_data["login_id"] = m.message_id
     await dialog_manager.switch_to(AuthSG.password)
 
 
 async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["password"] = m.text
+    dialog_manager.current_context().dialog_data["password_id"] = m.message_id
 
     resp = await sign_in(login=dialog_manager.current_context().dialog_data["login"],
                          password=dialog_manager.current_context().dialog_data["password"])
+
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=dialog_manager.current_context().dialog_data["login_id"])
+    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=dialog_manager.current_context().dialog_data["password_id"])
 
     if resp:
         user_org_id = await get_user_oguid(access_token=resp[0], refresh_token=resp[1], user_id=m.from_user.id)
@@ -77,6 +91,8 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           refresh_token=resp[1],
                           access_token=resp[0]
                           ).save()
+
+
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
 
@@ -85,7 +101,8 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
         await dialog_manager.start(MenuSG.choose_action)
         await dialog_manager.start(OrgSG.choose_org)
     else:
-        await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль\nПопробуйте еще раз!", parse_mode="HTML")
+        await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль\nПопробуйте еще раз!",
+                                     parse_mode="HTML")
         await dialog_manager.switch_to(AuthSG.login)
 
 
