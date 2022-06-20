@@ -20,8 +20,8 @@ class MessagesSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-    wait_msg_id = (
-        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
+    # wait_msg_id = (
+    #     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
