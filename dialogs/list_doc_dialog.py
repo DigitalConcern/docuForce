@@ -48,9 +48,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         text.append(micro_text)
         doc_ids.append(doc[5])
 
-    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
+
 
     if len(text) == 0:
+        await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
         if dialog_manager.current_context().dialog_data["find_string_doc"] == "":
             current_doc = "На данный момент у Вас нет документов!"
         else:
@@ -73,6 +74,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_doc_id"] = doc_ids[
             dialog_manager.current_context().dialog_data["counter"]]
+        await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
+
         return {
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", "-"),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
