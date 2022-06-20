@@ -41,12 +41,15 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
         pass
+    dialog_manager.current_context().dialog_data[
+        "len"]=len(text)
     if len(text) == 0:
         current_page = "На данный момент у Вас нет активных задач!"
         return {
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
             'is_not_first': False,
             'is_not_last': False,
+            'is_not_one': False,
             'have_tasks': False
         }
     else:
@@ -64,7 +67,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
             'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
-            'have_tasks': True
+            'have_tasks': True,
+            'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0) + 1,
+            'len': dialog_manager.current_context().dialog_data.get("len", len(text)),
+            'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
         }
 
 
@@ -92,6 +98,15 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             if dialog_manager.current_context().dialog_data["counter"] < len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
+        case "first":
+            dialog_manager.current_context().dialog_data["counter"] = 0
+            dialog_manager.current_context().dialog_data["is_not_last"] = True
+            dialog_manager.current_context().dialog_data["is_not_first"] = False
+        case "fin":
+            dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
+                "len"]-1
+            dialog_manager.current_context().dialog_data["is_not_last"] = False
+            dialog_manager.current_context().dialog_data["is_not_first"] = True
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -118,16 +133,25 @@ tasks_dialog = Dialog(
             on_click=go_to_doc
         ),
         Row(
-
-            Button(Format("<<"),
+            Button(Format("1<<"),
+                   when="is_not_first",
+                   id="first",
+                   on_click=switch_pages),
+            Button(Format("<"),
                    when="is_not_first",
                    id="minus",
                    on_click=switch_pages),
-            Button(Format(">>"),
+            Button(Format("{user_counter}"),
+                   when="is_not_one",
+                   id="curr"),
+            Button(Format(">"),
                    id="plus",
                    when="is_not_last",
                    on_click=switch_pages),
-
+            Button(Format(">>{len}"),
+                   id="fin",
+                   when="is_not_last",
+                   on_click=switch_pages),
         ),
         Cancel(Const("⏪ Назад")),
         state=TasksSG.choose_action,
