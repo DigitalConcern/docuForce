@@ -69,17 +69,18 @@ async def msg_instant(user_id):
                                                                       "tasks_amount", "messages_amount"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
         tasks_amount, messages_amount = data[3], data[4]
-        await asyncio.sleep(5*60)
+        await asyncio.sleep(5 * 60)
 
-        new_tasks_amount = len(await get_tasks_dict(user_id=user_id,
-                                                    refresh_token=refresh_token,
-                                                    access_token=access_token,
-                                                    org_id=organization))
-
-        new_msg_amount = len(await get_messages_dict(user_id=user_id,
-                                                     refresh_token=refresh_token,
-                                                     access_token=access_token,
-                                                     org_id=organization))
+        new_tasks_dict = await get_tasks_dict(user_id=user_id,
+                                              refresh_token=refresh_token,
+                                              access_token=access_token,
+                                              org_id=organization)
+        new_tasks_amount = len(new_tasks_dict)
+        new_msg_dict = await get_messages_dict(user_id=user_id,
+                                               refresh_token=refresh_token,
+                                               access_token=access_token,
+                                               org_id=organization)
+        new_msg_amount = len(new_msg_dict)
 
         await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount, messages_amount=new_msg_amount)
         diff_tasks = new_tasks_amount - tasks_amount

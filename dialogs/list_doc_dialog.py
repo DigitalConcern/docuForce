@@ -52,8 +52,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         text.append(micro_text)
         doc_ids.append(doc[5])
 
-
-
+    dialog_manager.current_context().dialog_data[
+        "len"]=len(text)
     if len(text) == 0:
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
         if dialog_manager.current_context().dialog_data["find_string_doc"] == "":
@@ -66,10 +66,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", current_doc),
             'is_not_first': False,
             'is_not_last': False,
+            'is_not_one': False,
             'have_documents': False,
             'org_id': dialog_manager.current_context().dialog_data.get("org_id", organization),
             'current_doc_id': dialog_manager.current_context().dialog_data.get("current_doc_id", 0),
             'access_token': dialog_manager.current_context().dialog_data.get("access_token", access_token),
+
         }
     else:
         if len(text) == 1:
@@ -96,7 +98,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'counter': dialog_manager.current_context().dialog_data.get("counter", 0),
             'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0)+1,
             'len':dialog_manager.current_context().dialog_data.get("len", len(text)),
-            'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", len(text)),
+            'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
         }
 
 
@@ -124,6 +126,15 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             if dialog_manager.current_context().dialog_data["counter"] < len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
+        case "first":
+            dialog_manager.current_context().dialog_data["counter"] = 0
+            dialog_manager.current_context().dialog_data["is_not_last"] = True
+            dialog_manager.current_context().dialog_data["is_not_first"] = False
+        case "fin":
+            dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
+                "len"]-1
+            dialog_manager.current_context().dialog_data["is_not_last"] = False
+            dialog_manager.current_context().dialog_data["is_not_first"] = True
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
