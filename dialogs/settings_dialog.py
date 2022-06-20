@@ -70,7 +70,7 @@ settings_dialog = Dialog(
         ),
         Start(Const("Сменить организацию"), id="choose_action", state=OrgSG.choose_org),
         SwitchTo(Const("Уведомления"), id="notifics", state=SettingsSG.notifics),
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=SettingsSG.choose_action
     ),
     Window(

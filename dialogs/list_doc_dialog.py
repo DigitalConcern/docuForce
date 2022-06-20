@@ -190,7 +190,7 @@ list_doc_dialog = Dialog(
             ),
 
 
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=ListDocSG.choose_action,
         getter=get_data,
         parse_mode=ParseMode.HTML
@@ -198,7 +198,7 @@ list_doc_dialog = Dialog(
     Window(
         Const("Введите строку для поиска в документах"),
         MessageInput(search_handler),
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=ListDocSG.find,
     ),
     launch_mode=LaunchMode.SINGLE_TOP

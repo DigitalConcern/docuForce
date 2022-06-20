@@ -67,7 +67,7 @@ org_dialog = Dialog(
             id="orgs",
             on_click=on_org_clicked
         ), width=4),
-        Cancel(Const("⏪ Назад")),
+        # Cancel(Const("⏪ Назад")),
         state=OrgSG.choose_org,
         getter=get_data,
         parse_mode=ParseMode.HTML

@@ -72,6 +72,7 @@ async def login_handler(m: Message, dialog: Dialog, dialog_manager: DialogManage
 async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["password"] = m.text
     dialog_manager.current_context().dialog_data["password_id"] = m.message_id
+    dialog_manager.current_context().dialog_data["id"]=m.from_user.id
 
     resp = await sign_in(login=dialog_manager.current_context().dialog_data["login"],
                          password=dialog_manager.current_context().dialog_data["password"])
