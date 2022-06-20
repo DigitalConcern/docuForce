@@ -25,11 +25,11 @@ class SettingsSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-    wait_msg_id = (
-        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
+    # wait_msg_id = (
+    #     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     radio = dialog_manager.dialog().find("notifications")
-
-    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
+    #
+    # await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1"):
         if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification", flat=True))[0]:

@@ -31,6 +31,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         "conversations_dict", "")
 
     if dialog_manager.current_context().dialog_data["conversations_dict"] == "":
+        wait_msg_id = (
+            await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
         conversations_dict = await get_messages_dict(access_token=access_token,
                                                      refresh_token=refresh_token,
                                                      org_id=organization,
@@ -56,9 +58,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         doc_ids.append(conversation)
         entity_ids.append(conversations_dict[conversation][8])
         user_ids.append(conversations_dict[conversation][9])
-
-    await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
-
+    try:
+        await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
+    except:
+        pass
     if len(text) == 0:
         current_page = "На данный момент у Вас нет сообщений!"
         return {
