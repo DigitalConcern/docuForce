@@ -29,7 +29,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
         for conv_key in conversations.keys():
             messages_in_conv[conv_key] = conversations[conv_key][10]
 
-        await asyncio.sleep(5 * 60 * 8)
+        await asyncio.sleep(5 * 60 * 5)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -122,7 +122,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
         for conv_key in conversations.keys():
             messages_in_conv[conv_key] = conversations[conv_key][10]
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(5*60)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
