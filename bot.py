@@ -1,10 +1,11 @@
 import base64
 import logging
 import pathlib
+import httpx
 from io import BytesIO
 from typing import IO, Union, Optional, Dict, Any
 
-import requests
+
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import ContentType
@@ -77,7 +78,8 @@ class SuperMesssageManager(MessageManager):
             return media.file_id.file_id
         if media.url:
 
-            response = requests.get(url=media.url, headers=media.url_headers)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url=media.url, headers=media.url_headers)
             if response.status_code != 200:
                 return open(pathlib.Path("./resources/white.png"), "rb")
             return BytesIO(base64.b64decode(response.text))

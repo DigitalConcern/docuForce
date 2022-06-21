@@ -1,8 +1,8 @@
 import asyncio
+from asyncio import CancelledError
 
-import database
 from bot import MyBot
-from database import loop_db
+from database import loop_db, ActiveUsers
 from dialogs.org_dialog import org_dialog
 from dialogs.auth_dialog import auth_dialog
 from dialogs.tasks_dialog import tasks_dialog
@@ -11,6 +11,7 @@ from dialogs.settings_dialog import settings_dialog
 from dialogs.list_doc_dialog import list_doc_dialog
 from dialogs.messages_dialog import messages_dialog
 import dialogs.menu_dialog
+from notifications import loop_notifications_8hrs, loop_notifications_instant
 
 
 async def main():
@@ -23,9 +24,9 @@ async def main():
     MyBot.register_dialogs(messages_dialog)
 
     await loop_db()
-    # await asyncio.sleep(2)
-    # for user_id in (await database.ActiveUsers.filter().values_list("user_id", flat=True)):
-    #     await MyBot.bot.send_message(chat_id=user_id,text="Бот перезапущен! Чтобы продолжить работу - отправьте команду /start")
+    await asyncio.sleep(2)
+    for user_id in (await ActiveUsers.filter().values_list("user_id", flat=True)):
+        await MyBot.bot.send_message(chat_id=user_id, text="Бот перезапущен! Чтобы продолжить работу - отправьте любую команду")
     await MyBot.run_bot()
 
 if __name__ == '__main__':

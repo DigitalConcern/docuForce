@@ -32,7 +32,6 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     for key in orgs_dict.keys():
         orgs_list += f'{key}. {orgs_dict[key][0]}\n'
     dialog_manager.current_context().dialog_data["organization_dict"] = orgs_dict
-    # dialog_manager.current_context().dialog_data["organization_list"] = orgs_list
 
     await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
@@ -48,13 +47,8 @@ async def on_org_clicked(c: CallbackQuery, select: Select, dialog_manager: Dialo
 
     await ActiveUsers.filter(user_id=c.from_user.id).update(organization=org_uuid)
 
-    # dialog_manager.current_context().dialog_data["organization_list"] = f"Организация\n{org_name}\nуспешно выбрана!"
-    # await dialog_manager.bg().update({"organization_list": f"Организация\n{org_name}\nуспешно выбрана!"}) # МОЖНО ТАК
-
-    # сделал через сообщение, тк стартует меню, а это ROOT диалог, следовательно стек ресетается и функции выше
-    # ничего не меняют
-
     await MyBot.bot.send_message(c.from_user.id, f"Организация\n{org_name}\nуспешно выбрана!")
+    await MyBot.bot.send_message(c.from_user.id, f"Теперь Вы можете использовать любую команду из меню!")
     await dialog_manager.done()
 
 org_dialog = Dialog(

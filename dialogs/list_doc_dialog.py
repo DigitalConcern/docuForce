@@ -20,7 +20,8 @@ class ListDocSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-    wait_msg_id=(await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id,text="Загрузка...")).message_id
+    wait_msg_id = (
+        await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
 
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
@@ -52,8 +53,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         text.append(micro_text)
         doc_ids.append(doc[5])
 
-    dialog_manager.current_context().dialog_data[
-        "len"]=len(text)
+    dialog_manager.current_context().dialog_data["len"] = len(text)
     if len(text) == 0:
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
         if dialog_manager.current_context().dialog_data["find_string_doc"] == "":
@@ -61,7 +61,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             dialog_manager.current_context().dialog_data["current_doc"] = "На данный момент у Вас нет документов!"
         else:
             current_doc = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
-            dialog_manager.current_context().dialog_data["current_doc"] = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
+            dialog_manager.current_context().dialog_data[
+                "current_doc"] = f"Документов, которые содержат '{dialog_manager.current_context().dialog_data['find_string_doc']}' не найдено!"
         return {
             'current_doc': dialog_manager.current_context().dialog_data.get("current_doc", current_doc),
             'is_not_first': False,
@@ -96,8 +97,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'current_doc_id': dialog_manager.current_context().dialog_data.get("current_doc_id", 0),
             'have_documents': True,
             'counter': dialog_manager.current_context().dialog_data.get("counter", 0),
-            'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0)+1,
-            'len':dialog_manager.current_context().dialog_data.get("len", len(text)),
+            'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0) + 1,
+            'len': dialog_manager.current_context().dialog_data.get("len", len(text)),
             'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
         }
 
@@ -132,7 +133,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             dialog_manager.current_context().dialog_data["is_not_first"] = False
         case "fin":
             dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
-                "len"]-1
+                                                                          "len"] - 1
             dialog_manager.current_context().dialog_data["is_not_last"] = False
             dialog_manager.current_context().dialog_data["is_not_first"] = True
 
@@ -167,28 +168,27 @@ list_doc_dialog = Dialog(
             on_click=go_to_doc
         ),
 
-            Row(
-                Button(Format("1"),
-                       when="is_not_first",
-                       id="first",
-                       on_click=switch_pages),
-                Button(Format("<<"),
-                       when="is_not_first",
-                       id="minus",
-                       on_click=switch_pages),
-                Button(Format("{user_counter}"),
-                       when="is_not_one",
-                       id="curr"),
-                Button(Format(">>"),
-                       id="plus",
-                       when="is_not_last",
-                       on_click=switch_pages),
-                Button(Format("{len}"),
-                       id="fin",
-                       when="is_not_last",
-                       on_click=switch_pages),
-            ),
-
+        Row(
+            Button(Format("1"),
+                   when="is_not_first",
+                   id="first",
+                   on_click=switch_pages),
+            Button(Format("<<"),
+                   when="is_not_first",
+                   id="minus",
+                   on_click=switch_pages),
+            Button(Format("{user_counter}"),
+                   when="is_not_one",
+                   id="curr"),
+            Button(Format(">>"),
+                   id="plus",
+                   when="is_not_last",
+                   on_click=switch_pages),
+            Button(Format("{len}"),
+                   id="fin",
+                   when="is_not_last",
+                   on_click=switch_pages),
+        ),
 
         # Cancel(Const("⏪ Назад")),
         state=ListDocSG.choose_action,

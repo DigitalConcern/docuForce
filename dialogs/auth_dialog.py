@@ -22,47 +22,6 @@ class AuthSG(StatesGroup):
     password = State()
 
 
-# async def get_data(dialog_manager: DialogManager, **kwargs):
-#     return {
-#         'login_msg_id': dialog_manager.current_context().dialog_data.get("current_page", 0),
-#         'password_msg_id': dialog_manager.current_context().dialog_data.get("is_not_first", 0),
-#     }
-
-
-async def start(m: Message, dialog_manager: DialogManager):
-    if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
-        await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
-        await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
-        dialog_manager.current_context().dialog_data["id"] = m.from_user.id
-    else:
-        eight_hour_notification = \
-            (await ActiveUsers.filter(user_id=m.from_user.id).values_list("eight_hour_notification", flat=True))[0]
-        instant_notification = \
-            (await ActiveUsers.filter(user_id=m.from_user.id).values_list("instant_notification", flat=True))[0]
-        if not eight_hour_notification and not instant_notification:
-            await ActiveUsers.filter(user_id=m.from_user.id).update(eight_hour_notification=True)
-            await loop_notifications_8hrs(user_id=m.from_user.id)
-        elif eight_hour_notification:
-            try:
-                for task in asyncio.all_tasks():
-                    if task.get_name() == str(m.from_user.id):
-                        task.cancel()
-            except CancelledError:
-                pass
-            await loop_notifications_8hrs(user_id=m.from_user.id)
-        elif instant_notification:
-            try:
-                for task in asyncio.all_tasks():
-                    if task.get_name() == str(m.from_user.id):
-                        task.cancel()
-            except CancelledError:
-                pass
-            await loop_notifications_instant(user_id=m.from_user.id)
-
-
-MyBot.register_handler(method=start, commands="start", state="*")
-
-
 async def login_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["login"] = m.text
     dialog_manager.current_context().dialog_data["login_id"] = m.message_id
@@ -72,7 +31,7 @@ async def login_handler(m: Message, dialog: Dialog, dialog_manager: DialogManage
 async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     dialog_manager.current_context().dialog_data["password"] = m.text
     dialog_manager.current_context().dialog_data["password_id"] = m.message_id
-    dialog_manager.current_context().dialog_data["id"]=m.from_user.id
+    dialog_manager.current_context().dialog_data["id"] = m.from_user.id
 
     resp = await sign_in(login=dialog_manager.current_context().dialog_data["login"],
                          password=dialog_manager.current_context().dialog_data["password"])
@@ -89,13 +48,14 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           login=dialog_manager.current_context().dialog_data["login"],
                           password=dialog_manager.current_context().dialog_data["password"],
                           refresh_token=resp[1],
-                          access_token=resp[0]
+                          access_token=resp[0],
+                          instant_notification=True
                           ).save()
 
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
 
-        await loop_notifications_8hrs(user_id=m.from_user.id)
+        await loop_notifications_instant(user_id=m.from_user.id, manager=dialog_manager)
 
         await dialog_manager.start(OrgSG.choose_org)
     else:
