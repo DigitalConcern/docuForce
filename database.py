@@ -14,7 +14,7 @@ class ActiveUsers(Model):
     access_token = fields.TextField()
     current_document_id = fields.TextField(null=True)
     tasks_amount = fields.IntField(default=0)
-    messages_amount = fields.IntField(default=0)
+    conversations_amount = fields.IntField(default=0)
     eight_hour_notification = fields.BooleanField(default=False)
     instant_notification = fields.BooleanField(default=True)
 

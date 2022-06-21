@@ -77,7 +77,6 @@ class SuperMesssageManager(MessageManager):
         if media.file_id:
             return media.file_id.file_id
         if media.url:
-
             async with httpx.AsyncClient() as client:
                 response = await client.get(url=media.url, headers=media.url_headers)
             if response.status_code != 200:

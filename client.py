@@ -425,7 +425,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     return result
 
 
-async def get_messages_dict(access_token, refresh_token, org_id, user_id):
+async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
@@ -529,7 +529,8 @@ async def get_messages_dict(access_token, refresh_token, org_id, user_id):
                                                      messages,
                                                      stage,
                                                      conversation["task"]["oguid"],
-                                                     conversation["task"]["author"]["oguid"]
+                                                     conversation["task"]["author"]["oguid"],
+                                                     len(messages)
                                                      )  # Найти какие данные нужно вытащить из тасков
     return result
 
