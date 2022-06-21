@@ -38,7 +38,6 @@ async def get_user_oguid(access_token, refresh_token, user_id) -> str:
     user_oguid = response.json()["oguid"]
 
     while response.status_code != 200:
-
         await get_access(refresh_token=refresh_token, user_id=user_id)
         async with httpx.AsyncClient() as requests:
             response = await requests.post(url=url, headers=headers)
@@ -93,7 +92,8 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
 
     params = {
         'showMode': "NEED_TO_ACTION",
-        'isCompleted': "false"
+        'isCompleted': "false",
+        'perPage': 100,
     }
     async with httpx.AsyncClient() as requests:
         response = await requests.get(url=url, headers=headers, params=params)
@@ -117,22 +117,22 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         try:
             cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
                 task["document"]["fields"]["currency"]) + "\n "
-        except :
+        except:
             cost = ""
         try:
             org__name = task["document"]["fields"]["contractor"] + "\n"
-        except :
+        except:
             org__name = ""
         try:
             data = " От " + datetime.datetime.fromtimestamp(
                 task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
-        except :
+        except:
             data = ""
         try:
             doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
             if data == "":
                 doc_index += "\n"
-        except :
+        except:
             doc_index = ""
         try:
             doc_key = str(task["document"]["type"])
@@ -141,10 +141,10 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                 meta_response = await requests.get(url=meta_url, headers=headers)
             try:
                 doc_name = meta_response.json()["titles"]["ru"]
-            except :
+            except:
                 try:
                     doc_name = meta_response.json()["title"]
-                except :
+                except:
                     doc_name = meta_response.json()["titles"]["en"]
             other_fields = ""
             try:
@@ -155,19 +155,19 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                         try:
                             other_fields += field["component"]["label"] + ": " + str(
                                 task["document"]["fields"][field["key"]])
-                        except :
+                        except:
                             other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                 task["document"]["fields"][field["key"]]) + "\n"
                         print(other_fields)
-            except :
+            except:
                 pass
-        except :
+        except:
             doc_name = ""
-        stage = "\n\n" + f"<i>Завершено</i>"
+        stage = "\n" + f"Статус: <b>Завершено</b>\n"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == task["document"]['flowStageType']:
-                    stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
             except KeyError:
                 stage = ""
         result[f"{ctr}"] = (cost,
@@ -264,7 +264,7 @@ async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_
     try:
         certif_id = certif_response.json()["oguid"]
         certif_standard = certif_response.json()["standard"]
-    except :
+    except:
         certif_id = ""
         certif_standard = ""
     return certif_id, certif_standard
@@ -412,11 +412,11 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         except KeyError:
             doc_id = ""
 
-        stage = "\n\n" + f"<i>Завершено</i>"
+        stage = "\n" + f"Статус: <b>Завершено</b>\n"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == resp['flowStageType']:
-                    stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
             except KeyError:
                 stage = ""
 
@@ -501,11 +501,11 @@ async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
         except KeyError:
             doc_name = ""
 
-        stage = "\n\n" + f"<i>Завершено</i>"
+        stage = "\n" + f"Статус: <b>Завершено</b>\n"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == conversation["document"]['flowStageType']:
-                    stage = "\n\n" + f"<i>{stage_type['name']}</i>"
+                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
             except KeyError:
                 stage = ""
         try:

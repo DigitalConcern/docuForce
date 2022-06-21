@@ -53,7 +53,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                      f"{conversations_dict[conversation][0]}" \
                      f"{conversations_dict[conversation][5]}" \
                      f'<i>{"".join(reversed(conversations_dict[conversation][6]))}</i>' \
-                     f"Статус: {conversations_dict[conversation][7]}"
+                     f"\n{conversations_dict[conversation][7]}"
         text.append(micro_text)
         doc_ids.append(conversation)
         entity_ids.append(conversations_dict[conversation][8])
@@ -130,7 +130,8 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
                               answer=m.text,
                               user_id=m.from_user.id)
     dialog_manager.current_context().dialog_data["conversations_dict"] = ""
-    await dialog_manager.done()
+
+    await dialog_manager.switch_to(MessagesSG.choose_action)
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
