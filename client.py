@@ -526,7 +526,7 @@ async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
                                                      doc_index,
                                                      doc_name,
                                                      other_fields,
-                                                     messages,
+                                                     messages[conversation["document"]["oguid"]],
                                                      stage,
                                                      conversation["task"]["oguid"],
                                                      conversation["task"]["author"]["oguid"],

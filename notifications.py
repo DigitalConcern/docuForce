@@ -74,7 +74,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
 
 
 async def msg_instant(user_id: int, manager: DialogManager):
-    messages_in_conv = defaultdict(list)
+    messages_in_conv = defaultdict(int)
     while True:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
                                                                       "tasks_amount", "conversations_amount"))[0]
@@ -87,9 +87,9 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                                      org_id=organization)
 
         for conv_key in conversations.keys():
-            messages_in_conv[conv_key].append(conversations[conv_key][10])
+            messages_in_conv[conv_key] = conversations[conv_key][10]
 
-        await asyncio.sleep(25)
+        await asyncio.sleep(5)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -114,12 +114,22 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         else:
                             match diff_msgs_in_conv % 10:
                                 case 1:
-                                    await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новое сообщение!")
+                                    await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новое сообщение!")
                                 case 2 | 3 | 4:
-                                    await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщения!")
+                                    await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщения!")
                                 case _:
-                                    await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщений!")
-                        await manager.bg().start(MessagesSG.choose_action)
+                                    await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
+                        # await manager.start(MessagesSG.choose_action)
+                        msg_arr = new_conversations[conv_key][6][:diff_msgs_in_conv]
+                        micro_text = f"По документу {new_conversations[conv_key][1]}" \
+                                     f"{new_conversations[conv_key][4]}" \
+                                     f"{new_conversations[conv_key][3]}" \
+                                     f"{new_conversations[conv_key][2]}" \
+                                     f"{new_conversations[conv_key][0]}" \
+                                     f"{new_conversations[conv_key][5]}" \
+                                     f'<i>{"".join(reversed(msg_arr))}</i>' \
+                                     f"Статус: {new_conversations[conv_key][7]}"
+                        await MyBot.bot.send_message(user_id, text=micro_text,parse_mode=ParseMode.HTML)
             except KeyError:
                 pass
 
@@ -140,7 +150,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
-            await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
 
             # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
         # else:

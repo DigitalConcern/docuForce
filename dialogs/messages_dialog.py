@@ -52,8 +52,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                      f"{conversations_dict[conversation][2]}" \
                      f"{conversations_dict[conversation][0]}" \
                      f"{conversations_dict[conversation][5]}" \
-                     f'<i>{"".join(reversed(conversations_dict[conversation][6][conversation]))}</i>' \
-                     f"{conversations_dict[conversation][7]}"
+                     f'<i>{"".join(reversed(conversations_dict[conversation][6]))}</i>' \
+                     f"Статус: {conversations_dict[conversation][7]}"
         text.append(micro_text)
         doc_ids.append(conversation)
         entity_ids.append(conversations_dict[conversation][8])

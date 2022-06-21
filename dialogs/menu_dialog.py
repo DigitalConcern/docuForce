@@ -32,7 +32,7 @@ async def start_notifications(user_id: int, manager: DialogManager):
         (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
     if not eight_hour_notification and not instant_notification:
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
-        await loop_notifications_instant(user_id=user_id, manager=manager)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
     elif eight_hour_notification:
         try:
             for task in asyncio.all_tasks():
@@ -40,7 +40,7 @@ async def start_notifications(user_id: int, manager: DialogManager):
                     task.cancel()
         except CancelledError:
             pass
-        await loop_notifications_8hrs(user_id=user_id, manager=manager)
+        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
     elif instant_notification:
         try:
             for task in asyncio.all_tasks():
@@ -48,7 +48,7 @@ async def start_notifications(user_id: int, manager: DialogManager):
                     task.cancel()
         except CancelledError:
             pass
-        await loop_notifications_instant(user_id=user_id, manager=manager)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
 
 
 async def tasks(m: Message, dialog_manager: DialogManager):
