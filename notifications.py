@@ -1,13 +1,17 @@
 import asyncio
 
 from aiogram.types import ParseMode
+from aiogram_dialog import DialogManager, StartMode
 
 from bot import MyBot
 from client import get_tasks_dict, get_messages_dict
 from database import ActiveUsers
 
+from dialogs.tasks_dialog import TasksSG
+from dialogs.messages_dialog import MessagesSG
 
-async def msg_8hrs(user_id):
+
+async def msg_8hrs(user_id: int, manager: DialogManager):
     counter = 0
     tasks_amount = 0
     messages_amount = 0
@@ -44,6 +48,7 @@ async def msg_8hrs(user_id):
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
+                await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
             else:
                 await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
@@ -59,6 +64,7 @@ async def msg_8hrs(user_id):
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                         case _:
                             await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
+                await manager.start(MessagesSG.choose_action)
             else:
                 await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 
@@ -66,13 +72,13 @@ async def msg_8hrs(user_id):
         await asyncio.sleep(5 * 60)
 
 
-async def msg_instant(user_id):
+async def msg_instant(user_id: int, manager: DialogManager):
     while True:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
                                                                       "tasks_amount", "messages_amount"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
         tasks_amount, messages_amount = data[3], data[4]
-        await asyncio.sleep(5)
+        await asyncio.sleep(25)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -80,10 +86,10 @@ async def msg_instant(user_id):
                                               org_id=organization)
         new_tasks_amount = len(new_tasks_dict)
 
-        text_task = []
-        for task in new_tasks_dict.keys():
-            text_task.append(
-                f"{new_tasks_dict[task][1]}{new_tasks_dict[task][5]} {new_tasks_dict[task][4]}{new_tasks_dict[task][2]}{new_tasks_dict[task][0]}{new_tasks_dict[task][6]}{new_tasks_dict[task][7]}\n")
+        # text_task = []
+        # for task in new_tasks_dict.keys():
+        #     text_task.append(
+        #         f"{new_tasks_dict[task][1]}{new_tasks_dict[task][5]} {new_tasks_dict[task][4]}{new_tasks_dict[task][2]}{new_tasks_dict[task][0]}{new_tasks_dict[task][6]}{new_tasks_dict[task][7]}\n")
 
         new_msg_dict = await get_messages_dict(user_id=user_id,
                                                refresh_token=refresh_token,
@@ -93,9 +99,9 @@ async def msg_instant(user_id):
 
         await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount, messages_amount=new_msg_amount)
         diff_tasks = new_tasks_amount - tasks_amount
-        text_not_task = ""
-        for i in range(diff_tasks):
-            text_not_task += text_task[i]
+        # text_not_task = ""
+        # for i in range(diff_tasks):
+        #     text_not_task += text_task[i]
         if diff_tasks > 0:
             if [11, 12, 13, 14].__contains__(diff_tasks):
                 await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
@@ -107,7 +113,9 @@ async def msg_instant(user_id):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
-            await MyBot.bot.send_message(user_id,text_not_task,parse_mode=ParseMode.HTML)
+            await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+
+            # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
         # else:
         #     await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
@@ -123,15 +131,16 @@ async def msg_instant(user_id):
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
+            await manager.start(MessagesSG.choose_action)
         # else:
         #     await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 
 
-async def loop_notifications_8hrs(user_id):
+async def loop_notifications_8hrs(user_id, manager):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_8hrs(user_id=user_id), name=str(user_id))
+    loop.create_task(msg_8hrs(user_id=user_id, manager=manager), name=str(user_id))
 
 
-async def loop_notifications_instant(user_id):
+async def loop_notifications_instant(user_id, manager):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_instant(user_id=user_id), name=str(user_id))
+    loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))

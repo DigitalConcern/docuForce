@@ -49,7 +49,7 @@ async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, 
             pass
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=False)
-        await loop_notifications_8hrs(user_id=event.from_user.id)
+        await loop_notifications_8hrs(user_id=event.from_user.id, manager=manager)
     if item_id == '1':
         try:
             for task in asyncio.all_tasks():
@@ -59,7 +59,7 @@ async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, 
             pass
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=False)
-        await loop_notifications_instant(user_id=event.from_user.id)
+        await loop_notifications_instant(user_id=event.from_user.id, manager=manager)
 
 
 settings_dialog = Dialog(
