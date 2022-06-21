@@ -119,7 +119,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                     await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщения!")
                                 case _:
                                     await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщений!")
-                        await manager.start(MessagesSG.choose_action)
+                        await manager.bg().start(MessagesSG.choose_action)
             except KeyError:
                 pass
 
@@ -140,7 +140,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
-            await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
 
             # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
         # else:
@@ -158,7 +158,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"И {diff_conv} новых сообщения!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"И {diff_conv} новых сообщений!")
-            await manager.start(MessagesSG.choose_action)
+            await manager.bg().start(MessagesSG.choose_action)
         # else:
         #     await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
 

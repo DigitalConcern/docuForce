@@ -530,7 +530,7 @@ async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
                                                      stage,
                                                      conversation["task"]["oguid"],
                                                      conversation["task"]["author"]["oguid"],
-                                                     len(messages)
+                                                     len(messages[conversation["document"]["oguid"]])
                                                      )  # Найти какие данные нужно вытащить из тасков
     return result
 
