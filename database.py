@@ -15,8 +15,8 @@ class ActiveUsers(Model):
     current_document_id = fields.TextField(null=True)
     tasks_amount = fields.IntField(default=0)
     messages_amount = fields.IntField(default=0)
-    eight_hour_notification = fields.BooleanField(default=True)
-    instant_notification = fields.BooleanField(default=False)
+    eight_hour_notification = fields.BooleanField(default=False)
+    instant_notification = fields.BooleanField(default=True)
 
     class Meta:
         table = "users"
