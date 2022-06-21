@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 import asyncio
-from sesame import utils
+# from sesame import utils
 from . import models
 from . import forms
 from .forms import ProgramForm, UserForm, FAQForm
@@ -164,12 +164,12 @@ class UsersEditView(UpdateView):
         elem.user_name = form.cleaned_data["user_name"]
         elem.grade = form.cleaned_data["grade"]
         elem.is_admin = form.cleaned_data["is_admin"]
-        if form.cleaned_data["is_admin"] is True:
-            user = models.ActiveUsers.objects.get(user_id=int(elem.user_id))
-            login_token = utils.get_parameters(user)
-            elem.link = "http://178.216.98.48/?sesame={}".format(login_token["sesame"])
-            print(elem.link)
-        elem.save()
+        # if form.cleaned_data["is_admin"] is True:
+        #     user = models.ActiveUsers.objects.get(user_id=int(elem.user_id))
+        #     login_token = utils.get_parameters(user)
+        #     elem.link = "http://178.216.98.48/?sesame={}".format(login_token["sesame"])
+        #     print(elem.link)
+        # elem.save()
         return redirect("/users")
 
 

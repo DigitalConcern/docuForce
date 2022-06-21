@@ -87,8 +87,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': "brainz-pg",  # 172.18.0.4 (В зависимости от кофигурации brainz-net)
+        'PASSWORD': '12345',
+        'HOST': "localhost",
         'PORT': '5432',
     }
 }
