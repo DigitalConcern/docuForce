@@ -79,8 +79,9 @@ class SuperMesssageManager(MessageManager):
         if media.url:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url=media.url, headers=media.url_headers)
-            if response.status_code != 200:
+            if (response.status_code != 200) or (response.text == ""):
                 return open(pathlib.Path("./resources/white.png"), "rb")
+
             return BytesIO(base64.b64decode(response.text))
         else:
             return open(media.path, "rb")

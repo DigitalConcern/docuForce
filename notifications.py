@@ -136,9 +136,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
         await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount,
                                                          conversations_amount=new_convers_amount)
         diff_tasks = new_tasks_amount - tasks_amount
-        # text_not_task = ""
-        # for i in range(diff_tasks):
-        #     text_not_task += text_task[i]
+
         if diff_tasks > 0:
             if [11, 12, 13, 14].__contains__(diff_tasks):
                 await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
@@ -150,9 +148,12 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
-            await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            # await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            text_not_task = "Ваши новые задачи: \n"
+            for i in range(diff_tasks):
+                text_not_task += new_tasks_dict[i]
 
-            # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
+            await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
         # else:
         #     await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
