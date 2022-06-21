@@ -11,7 +11,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from bot import MyBot
 from database import ActiveUsers
 from .view_doc_dialog import ViewDocSG
-from client import get_messages_dict, post_message_answer
+from client import get_conversations_dict, post_message_answer
 
 
 class MessagesSG(StatesGroup):
@@ -33,10 +33,10 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     if dialog_manager.current_context().dialog_data["conversations_dict"] == "":
         wait_msg_id = (
             await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
-        conversations_dict = await get_messages_dict(access_token=access_token,
-                                                     refresh_token=refresh_token,
-                                                     org_id=organization,
-                                                     user_id=dialog_manager.event.from_user.id)
+        conversations_dict = await get_conversations_dict(access_token=access_token,
+                                                          refresh_token=refresh_token,
+                                                          org_id=organization,
+                                                          user_id=dialog_manager.event.from_user.id)
         dialog_manager.current_context().dialog_data["conversations_dict"] = conversations_dict
     else:
         conversations_dict = dialog_manager.current_context().dialog_data["conversations_dict"]

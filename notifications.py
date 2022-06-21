@@ -1,10 +1,11 @@
 import asyncio
+from collections import defaultdict
 
 from aiogram.types import ParseMode
 from aiogram_dialog import DialogManager, StartMode
 
 from bot import MyBot
-from client import get_tasks_dict, get_messages_dict
+from client import get_tasks_dict, get_conversations_dict
 from database import ActiveUsers
 
 from dialogs.tasks_dialog import TasksSG
@@ -18,7 +19,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
     while True:
 
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
-                                                                      "tasks_amount", "messages_amount"))[0]
+                                                                      "tasks_amount", "conversations_amount"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
         if counter == 0:
             tasks_amount, messages_amount = data[3], data[4]
@@ -28,10 +29,10 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                                                     access_token=access_token,
                                                     org_id=organization))
 
-        new_msg_amount = len(await get_messages_dict(user_id=user_id,
-                                                     refresh_token=refresh_token,
-                                                     access_token=access_token,
-                                                     org_id=organization))
+        new_msg_amount = len(await get_conversations_dict(user_id=user_id,
+                                                          refresh_token=refresh_token,
+                                                          access_token=access_token,
+                                                          org_id=organization))
 
         await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount, messages_amount=new_msg_amount)
         counter += 1
@@ -73,11 +74,21 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
 
 
 async def msg_instant(user_id: int, manager: DialogManager):
+    messages_in_conv = defaultdict(list)
     while True:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
-                                                                      "tasks_amount", "messages_amount"))[0]
+                                                                      "tasks_amount", "conversations_amount"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
-        tasks_amount, messages_amount = data[3], data[4]
+        tasks_amount, convers_amount = data[3], data[4]
+
+        new_conv_dict = await get_conversations_dict(user_id=user_id,
+                                                     refresh_token=refresh_token,
+                                                     access_token=access_token,
+                                                     org_id=organization)
+
+        for conv_key in new_conv_dict.keys():
+            messages_in_conv[conv_key].append(new_conv_dict[conv_key][10])
+
         await asyncio.sleep(25)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
@@ -91,13 +102,23 @@ async def msg_instant(user_id: int, manager: DialogManager):
         #     text_task.append(
         #         f"{new_tasks_dict[task][1]}{new_tasks_dict[task][5]} {new_tasks_dict[task][4]}{new_tasks_dict[task][2]}{new_tasks_dict[task][0]}{new_tasks_dict[task][6]}{new_tasks_dict[task][7]}\n")
 
-        new_msg_dict = await get_messages_dict(user_id=user_id,
-                                               refresh_token=refresh_token,
-                                               access_token=access_token,
-                                               org_id=organization)
-        new_msg_amount = len(new_msg_dict)
+        new_conv_dict = await get_conversations_dict(user_id=user_id,
+                                                     refresh_token=refresh_token,
+                                                     access_token=access_token,
+                                                     org_id=organization)
 
-        await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount, messages_amount=new_msg_amount)
+        new_convers_amount = len(new_conv_dict)
+
+        diff_ms_cv = {}
+        for conv_key in new_conv_dict.keys():
+            try:
+                if messages_in_conv[conv_key] < new_conv_dict[conv_key][10]:
+                    diff_ms_cv[conv_key] = new_conv_dict[conv_key][10] - messages_in_conv[conv_key]
+            except:
+                pass
+
+        await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount,
+                                                         conversations_amount=new_convers_amount)
         diff_tasks = new_tasks_amount - tasks_amount
         # text_not_task = ""
         # for i in range(diff_tasks):
@@ -119,18 +140,18 @@ async def msg_instant(user_id: int, manager: DialogManager):
         # else:
         #     await MyBot.bot.send_message(user_id, f"У Вас нет новых задач!")
 
-        diff_msg = new_msg_amount - messages_amount
-        if diff_msg > 0:
-            if [11, 12, 13, 14].__contains__(diff_msg):
-                await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
+        diff_conv = new_convers_amount - convers_amount
+        if diff_conv > 0:
+            if [11, 12, 13, 14].__contains__(diff_conv):
+                await MyBot.bot.send_message(user_id, f"И {diff_conv} новых сообщений!")
             else:
-                match diff_msg % 10:
+                match diff_conv % 10:
                     case 1:
-                        await MyBot.bot.send_message(user_id, f"И {diff_msg} новое сообщение!")
+                        await MyBot.bot.send_message(user_id, f"И {diff_conv} новое сообщение!")
                     case 2 | 3 | 4:
-                        await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщения!")
+                        await MyBot.bot.send_message(user_id, f"И {diff_conv} новых сообщения!")
                     case _:
-                        await MyBot.bot.send_message(user_id, f"И {diff_msg} новых сообщений!")
+                        await MyBot.bot.send_message(user_id, f"И {diff_conv} новых сообщений!")
             await manager.start(MessagesSG.choose_action)
         # else:
         #     await MyBot.bot.send_message(user_id, f"И нет новых сообщений!")
