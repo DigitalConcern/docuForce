@@ -49,7 +49,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           password=dialog_manager.current_context().dialog_data["password"],
                           refresh_token=resp[1],
                           access_token=resp[0],
-                          instant_notification=True
+
                           ).save()
 
         await dialog_manager.done()
