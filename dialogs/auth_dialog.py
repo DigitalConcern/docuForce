@@ -53,25 +53,25 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
                           ).save()
 
         await dialog_manager.done()
-        await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались!")
+        await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались! ✅")
 
         await loop_notifications_instant(user_id=m.from_user.id, manager=dialog_manager)
 
         await dialog_manager.start(OrgSG.choose_org)
     else:
-        await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль\nПопробуйте еще раз!",
+        await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль ❌\nПопробуйте еще раз!",
                                      parse_mode="HTML")
         await dialog_manager.switch_to(AuthSG.login)
 
 
 auth_dialog = Dialog(
     Window(
-        Const("Введите логин"),
+        Const("Введите логин 🔒"),
         MessageInput(login_handler),
         state=AuthSG.login
     ),
     Window(
-        Const("Введите пароль"),
+        Const("Введите пароль 🔒"),
         MessageInput(password_handler),
         state=AuthSG.password
     ),

@@ -162,7 +162,7 @@ list_doc_dialog = Dialog(
         ),
         Format('{current_doc}'),
         Button(
-            Format("Просмотр документа"),
+            Format("Просмотр документа 📄"),
             when="have_documents",
             id="doc",
             on_click=go_to_doc
@@ -196,7 +196,7 @@ list_doc_dialog = Dialog(
         parse_mode=ParseMode.HTML
     ),
     Window(
-        Const("Введите строку для поиска в документах"),
+        Const("Введите строку для поиска в документах 🔍"),
         MessageInput(search_handler),
         # Cancel(Const("⏪ Назад")),
         state=ListDocSG.find,

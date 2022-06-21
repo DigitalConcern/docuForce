@@ -149,7 +149,7 @@ messages_dialog = Dialog(
                  state=MessagesSG.answer
                  ),
         Button(
-            Format("Просмотр документа"),
+            Format("Просмотр документа 📄"),
             when="have_tasks",
             id="doc",
             on_click=go_to_doc

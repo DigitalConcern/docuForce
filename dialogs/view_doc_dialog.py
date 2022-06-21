@@ -184,15 +184,15 @@ view_doc_dialog = Dialog(
                    on_click=switch_pages),
 
         ),
-        Button(Const("Скачать"),
+        Button(Const("Скачать 📥"),
                on_click=download_file,
                id="download"),
         Row(
-            Button(Format("{yes_name}"),
+            Button(Format("{yes_name} ✅"),
                    when="is_task",
                    id="yes",
                    on_click=do_task),
-            Button(Format("Отказать"),
+            Button(Format("Отказать ❌"),
                    when="is_task",
                    id="no",
                    on_click=do_task),

@@ -68,8 +68,8 @@ settings_dialog = Dialog(
             path="resources/sett2.png",
             type=ContentType.PHOTO
         ),
-        Start(Const("Сменить организацию"), id="choose_action", state=OrgSG.choose_org),
-        SwitchTo(Const("Уведомления"), id="notifics", state=SettingsSG.notifics),
+        Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
+        SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
         # Cancel(Const("⏪ Назад")),
         state=SettingsSG.choose_action
     ),
