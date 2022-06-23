@@ -33,10 +33,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         tasks_dict = dialog_manager.current_context().dialog_data["tasks_dict"]
     text = []
     doc_ids = []
+    yes_names=[]
     for task in tasks_dict.keys():
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
+        yes_names.append(tasks_dict[task][8])
     try:
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
@@ -59,7 +61,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         dialog_manager.current_context().dialog_data["text"] = text
         dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
             "counter", 0)
-
+        dialog_manager.current_context().dialog_data["yes_name"] = dialog_manager.current_context().dialog_data.get(
+            "yes_name", "Да")
+        dialog_manager.current_context().dialog_data["yes_name"] = yes_names[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_page"] = current_page
@@ -71,6 +75,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0) + 1,
             'len': dialog_manager.current_context().dialog_data.get("len", len(text)),
             'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
+            'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),
         }
 
 
@@ -152,6 +157,17 @@ tasks_dialog = Dialog(
                    id="fin",
                    when="is_not_last",
                    on_click=switch_pages),
+        ),
+        Row(
+            Button(Format("{yes_name} ✅"),
+                   id="yes",
+                   # on_click=do_task
+                   ),
+            Button(Format("Отказать ❌"),
+                   id="no",
+                   # on_click=do_task
+                   ),
+
         ),
         # Cancel(Const("⏪ Назад")),
         state=TasksSG.choose_action,
