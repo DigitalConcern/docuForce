@@ -11,7 +11,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from bot import MyBot
 from database import ActiveUsers
 from .view_doc_dialog import ViewDocSG
-from client import get_conversations_dict, post_message_answer
+from client import get_conversations_dict, post_message_answer, post_doc_action
 
 
 class MessagesSG(StatesGroup):
@@ -55,7 +55,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                      f'\nСообщение: <i>{conversations_dict[conversation][6]}</i>' \
                      f"\n{conversations_dict[conversation][7]}"
         text.append(micro_text)
-        doc_ids.append(conversation)
+        doc_ids.append(conversations_dict[conversation][10])
         entity_ids.append(conversations_dict[conversation][8])
         user_ids.append(conversations_dict[conversation][9])
     try:
@@ -80,6 +80,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
         dialog_manager.current_context().dialog_data["current_user"] = user_ids[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["current_task"] = entity_ids[
+            dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[0]
 
         return {
@@ -132,6 +134,21 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
     dialog_manager.current_context().dialog_data["conversations_dict"] = ""
 
     await dialog_manager.switch_to(MessagesSG.choose_action)
+async def close_msg(m: Message, dialog: Dialog, dialog_manager: DialogManager):
+    data = list(
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
+                                                                                        "organization"))[0]
+    refresh_token, access_token, organization = data[0], data[1], data[2]
+
+    await post_doc_action(refresh_token=refresh_token,
+                              access_token=access_token,
+                              org_id=organization,
+                              action="SOLVED",
+                            task_id=dialog_manager.current_context().dialog_data["current_task"],
+                              user_id=m.from_user.id)
+    dialog_manager.current_context().dialog_data["conversations_dict"] = ""
+
+    await dialog_manager.switch_to(MessagesSG.choose_action)
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -148,6 +165,10 @@ messages_dialog = Dialog(
                  id="answer",
                  state=MessagesSG.answer
                  ),
+        Button(Format("Закрыть") ,
+            when="have_tasks",
+            id="doc",
+            on_click=close_msg),
         Button(
             Format("Просмотр документа 📄"),
             when="have_tasks",

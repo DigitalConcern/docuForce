@@ -430,114 +430,114 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     return result
 
 
-async def get_conversations_dict_old(access_token, refresh_token, org_id, user_id):
-    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
-
-    params = {'showMode': "TODOS_ONLY",
-              'isCompleted': "false"}
-
-    async with httpx.AsyncClient() as requests:
-        response = await requests.get(url=url, headers=headers, params=params)
-    while response.status_code != 200:
-        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
-        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        async with httpx.AsyncClient() as requests:
-            response = await requests.get(url=url, headers=headers, params=params)
-
-    types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
-    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-    async with httpx.AsyncClient() as requests:
-        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
-
-    response_types_list = response_types.json()
-    conversations = response.json()
-
-    result = {}
-    messages = defaultdict(list)
-    for conversation in conversations:
-        try:
-            cost = "Сумма: " + str(conversation["document"]["fields"]["sumTotal"]) + " " + str(
-                conversation["document"]["fields"]["currency"])
-        except KeyError:
-            cost = ""
-        try:
-            org__name = conversation["document"]["fields"]["contractor"] + "\n"
-        except KeyError:
-            org__name = ""
-        try:
-            data = " От " + datetime.datetime.fromtimestamp(
-                conversation["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
-        except KeyError:
-            data = ""
-        try:
-            doc_index = "№" + str(conversation["document"]["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
-        except KeyError:
-            doc_index = ""
-        try:
-            doc_key = str(conversation["document"]["type"])
-            metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            async with httpx.AsyncClient() as requests:
-                meta_response = await requests.get(url=metaurl, headers=headers)
-            try:
-                doc_name = meta_response.json()["titles"]["ru"] + " "
-            except KeyError:
-                try:
-                    doc_name = meta_response.json()["title"] + " "
-                except KeyError:
-                    doc_name = meta_response.json()["titles"]["en"] + " "
-            other_fields = ""
-            try:
-                for field in meta_response.json()["fields"]:
-                    if field["formProperties"]["form"]["visible"] and (
-                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-                                                 "documentNumber"]):
-                        try:
-                            other_fields += field["component"]["label"] + ": " + str(
-                                conversation["document"]["fields"][field["key"]])
-                        except KeyError:
-                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                conversation["document"]["fields"][field["key"]]) + "\n"
-                        print(other_fields)
-            except KeyError:
-                pass
-        except KeyError:
-            doc_name = ""
-
-        stage = "\n" + f"Статус: <b>Завершено</b>\n"
-        for stage_type in response_types_list:
-            try:
-                if stage_type["type"] == conversation["document"]['flowStageType']:
-                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
-            except KeyError:
-                stage = ""
-        try:
-            comment = "\n\n" + conversation["task"]["description"]
-        except KeyError:
-            comment = ""
-
-        try:
-            author = "\n" + "От кого: " + conversation["task"]["author"]["name"] + " " + conversation["task"]["author"][
-                "surname"]
-        except KeyError:
-            author = ""
-        messages[conversation["document"]["oguid"]].append(comment + author)
-
-        result[conversation["document"]["oguid"]] = (cost,
-                                                     org__name,
-                                                     data,
-                                                     doc_index,
-                                                     doc_name,
-                                                     other_fields,
-                                                     messages[conversation["document"]["oguid"]],
-                                                     stage,
-                                                     conversation["task"]["oguid"],
-                                                     conversation["task"]["author"]["oguid"],
-                                                     len(messages[conversation["document"]["oguid"]])
-                                                     )  # Найти какие данные нужно вытащить из тасков
-    return result
+# async def get_conversations_dict_old(access_token, refresh_token, org_id, user_id):
+#     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+#     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+#
+#     params = {'showMode': "TODOS_ONLY",
+#               'isCompleted': "false"}
+#
+#     async with httpx.AsyncClient() as requests:
+#         response = await requests.get(url=url, headers=headers, params=params)
+#     while response.status_code != 200:
+#         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+#         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+#         async with httpx.AsyncClient() as requests:
+#             response = await requests.get(url=url, headers=headers, params=params)
+#
+#     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
+#     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
+#     async with httpx.AsyncClient() as requests:
+#         response_types = await requests.get(url=types_url, headers=types_headers, params=params)
+#
+#     response_types_list = response_types.json()
+#     conversations = response.json()
+#
+#     result = {}
+#     messages = defaultdict(list)
+#     for conversation in conversations:
+#         try:
+#             cost = "Сумма: " + str(conversation["document"]["fields"]["sumTotal"]) + " " + str(
+#                 conversation["document"]["fields"]["currency"])
+#         except KeyError:
+#             cost = ""
+#         try:
+#             org__name = conversation["document"]["fields"]["contractor"] + "\n"
+#         except KeyError:
+#             org__name = ""
+#         try:
+#             data = " От " + datetime.datetime.fromtimestamp(
+#                 conversation["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
+#         except KeyError:
+#             data = ""
+#         try:
+#             doc_index = "№" + str(conversation["document"]["fields"]["documentNumber"])
+#             if data == "":
+#                 doc_index += "\n"
+#         except KeyError:
+#             doc_index = ""
+#         try:
+#             doc_key = str(conversation["document"]["type"])
+#             metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
+#             async with httpx.AsyncClient() as requests:
+#                 meta_response = await requests.get(url=metaurl, headers=headers)
+#             try:
+#                 doc_name = meta_response.json()["titles"]["ru"] + " "
+#             except KeyError:
+#                 try:
+#                     doc_name = meta_response.json()["title"] + " "
+#                 except KeyError:
+#                     doc_name = meta_response.json()["titles"]["en"] + " "
+#             other_fields = ""
+#             try:
+#                 for field in meta_response.json()["fields"]:
+#                     if field["formProperties"]["form"]["visible"] and (
+#                             field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+#                                                  "documentNumber"]):
+#                         try:
+#                             other_fields += field["component"]["label"] + ": " + str(
+#                                 conversation["document"]["fields"][field["key"]])
+#                         except KeyError:
+#                             other_fields += field["component"]["labels"]["ru"] + ": " + str(
+#                                 conversation["document"]["fields"][field["key"]]) + "\n"
+#                         print(other_fields)
+#             except KeyError:
+#                 pass
+#         except KeyError:
+#             doc_name = ""
+#
+#         stage = "\n" + f"Статус: <b>Завершено</b>\n"
+#         for stage_type in response_types_list:
+#             try:
+#                 if stage_type["type"] == conversation["document"]['flowStageType']:
+#                     stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
+#             except KeyError:
+#                 stage = ""
+#         try:
+#             comment = "\n\n" + conversation["task"]["description"]
+#         except KeyError:
+#             comment = ""
+#
+#         try:
+#             author = "\n" + "От кого: " + conversation["task"]["author"]["name"] + " " + conversation["task"]["author"][
+#                 "surname"]
+#         except KeyError:
+#             author = ""
+#         messages[conversation["document"]["oguid"]].append(comment + author)
+#
+#         result[conversation["document"]["oguid"]] = (cost,
+#                                                      org__name,
+#                                                      data,
+#                                                      doc_index,
+#                                                      doc_name,
+#                                                      other_fields,
+#                                                      messages[conversation["document"]["oguid"]],
+#                                                      stage,
+#                                                      conversation["task"]["oguid"],
+#                                                      conversation["task"]["author"]["oguid"],
+#                                                      len(messages[conversation["document"]["oguid"]])
+#                                                      )  # Найти какие данные нужно вытащить из тасков
+#     return result
 
 
 async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
@@ -644,7 +644,8 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                             message,
                             stage,
                             task["task"]["oguid"],
-                            task["task"]["author"]["oguid"])
+                            task["task"]["author"]["oguid"],
+                            task["document"]["oguid"])
 
         ctr += 1
     return result
