@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group, Column
 from aiogram_dialog.widgets.text import Const, Format
 
-from client import get_orgs_dict, get_tasks_dict
+from client import get_orgs_dict, get_tasks_dict, post_doc_action, post_doc_sign, get_task_caption
 from database import ActiveUsers
 from bot import MyBot
 from dialogs.view_doc_dialog import ViewDocSG
@@ -17,10 +17,11 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
-                                                                                        "organization"))[0]
-    refresh_token, access_token, organization = data[0], data[1], data[2]
+                                                                                        "organization", "user_org_id"))[0]
+    refresh_token, access_token, organization,user_org_id = data[0], data[1], data[2],data[3]
     dialog_manager.current_context().dialog_data["tasks_dict"] = dialog_manager.current_context().dialog_data.get(
         "tasks_dict", "")
+    dialog_manager.current_context().dialog_data["user_org_id"]=user_org_id
     if dialog_manager.current_context().dialog_data["tasks_dict"] == "":
         wait_msg_id = (
             await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
@@ -34,11 +35,15 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     text = []
     doc_ids = []
     yes_names=[]
+    task_types=[]
+    task_ids=[]
     for task in tasks_dict.keys():
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
         yes_names.append(tasks_dict[task][8])
+        task_types.append(tasks_dict[task][9])
+        task_ids.append(tasks_dict[task][10])
     try:
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
@@ -63,6 +68,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             "counter", 0)
         dialog_manager.current_context().dialog_data["yes_name"] = dialog_manager.current_context().dialog_data.get(
             "yes_name", "Да")
+        dialog_manager.current_context().dialog_data["task_id"] = dialog_manager.current_context().dialog_data.get(
+            "task_id", "")
+        dialog_manager.current_context().dialog_data["task_id"]=task_ids[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["task_type_service"] = dialog_manager.current_context().dialog_data.get(
+            "task_type_service", "")
+        dialog_manager.current_context().dialog_data["task_type_service"]=task_types[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["yes_name"] = yes_names[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[dialog_manager.current_context().dialog_data["counter"]]
@@ -122,7 +133,48 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
     await dialog_manager.start(ViewDocSG.choose_action)
+async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    data = list(
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
+                                                                                        "organization"))[0]
+    refresh_token, access_token, organization = data[0], data[1], data[2]
+    msg_text = dialog_manager.current_context().dialog_data["current_page"].rpartition('Статус:')[0]
+    msg_text += f"Результат:\n"
+    match button.widget_id:
+        case "yes":
+            data = "SOLVED"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
+                await post_doc_action(access_token=access_token,
+                                      refresh_token=refresh_token,
+                                      org_id=organization,
+                                      task_id=dialog_manager.current_context().dialog_data["task_id"],
+                                      action=data,
+                                      user_id=c.from_user.id)
+            else:
+                await post_doc_sign(access_token=access_token,
+                                    refresh_token=refresh_token,
+                                    org_id=organization,
+                                    user_oguid=dialog_manager.current_context().dialog_data["user_org_id"],
+                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
+                                    doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
+                                    user_id=dialog_manager.event.from_user.id)
+            msg_text+="Документ "
+            msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
+                                               user_id=dialog_manager.event.from_user.id,
+                                               doc_task_type=dialog_manager.current_context().dialog_data[
+                                                   'task_type_service'], org_id=organization, is_done=True)
+        case "no":
+            data = "DECLINED"
+            await post_doc_action(access_token, refresh_token, organization,
+                                  dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
+            msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
+                                               user_id=dialog_manager.event.from_user.id,
+                                               doc_task_type=dialog_manager.current_context().dialog_data[
+                                                   'task_type_service'], org_id=organization, is_done=False)
+    await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
+
+    await dialog_manager.done()
 
 class TasksSG(StatesGroup):
     choose_action = State()
@@ -161,11 +213,11 @@ tasks_dialog = Dialog(
         Row(
             Button(Format("{yes_name} ✅"),
                    id="yes",
-                   # on_click=do_task
+                   on_click=do_task
                    ),
             Button(Format("Отказать ❌"),
                    id="no",
-                   # on_click=do_task
+                   on_click=do_task
                    ),
 
         ),
