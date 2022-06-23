@@ -58,7 +58,7 @@ async def get_access(refresh_token, user_id) -> str:
     if response.status_code != 200:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("login", "password"))[0]
         tokens = await sign_in(login=data[0], password=data[1])
-        await ActiveUsers.filter(user_id=user_id).update(refresh_token=tokens[1],access_token=tokens[0])
+        await ActiveUsers.filter(user_id=user_id).update(refresh_token=tokens[1], access_token=tokens[0])
         return tokens[0]
     else:
         access = response.json()["access"]
@@ -190,7 +190,6 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     async with httpx.AsyncClient() as requests:
         page_response = await requests.get(url=page_url, headers=headers)
     while page_response.status_code != 200:
-
         headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
         async with httpx.AsyncClient() as requests:
             page_response = await requests.get(url=page_url, headers=headers)
@@ -545,7 +544,9 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
     params = {'showMode': "TODOS_ONLY",
-              'isCompleted': "false"}
+              'isCompleted': "false",
+              "page": -1,
+              "taskDirection": "TO_ME"}
 
     async with httpx.AsyncClient() as requests:
         response = await requests.get(url=url, headers=headers, params=params)
@@ -624,7 +625,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
             except KeyError:
                 stage = ""
         try:
-            comment = "\n" + task["task"]["description"]+"\n"
+            comment = "\n" + task["task"]["description"] + "\n"
         except KeyError:
             comment = ""
 
@@ -651,13 +652,29 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     return result
 
 
-async def post_message_answer(access_token, refresh_token, org_id, entity_id, user_oguid, user_id, answer):
+async def post_markasread(access_token, refresh_token, org_id, task_id,user_id):
+    headers = {"Access-Token": f"{access_token}"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/markAsRead"
+
+    async with httpx.AsyncClient() as requests:
+        response = await requests.post(url=url, headers=headers)
+    while response.status_code != 204:
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
+        async with httpx.AsyncClient() as requests:
+            response = await requests.post(url=url, headers=headers)
+
+    return "NOT CRINGE"
+
+
+async def post_message_answer(access_token, refresh_token, org_id, entity_id, user_oguid, user_id, answer,task_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/entities/{entity_id}/tasks"
 
     json = {
         'assignedToUserOguid': user_oguid,
-        "description": answer
+        "description": answer,
+        "parentTaskOguid":task_id
     }
 
     async with httpx.AsyncClient() as requests:
@@ -667,7 +684,6 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         async with httpx.AsyncClient() as requests:
             response = await requests.post(url=url, headers=headers, json=json)
-
     return "SUCCESS"
 
 
