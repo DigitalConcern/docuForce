@@ -52,7 +52,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                      f"{conversations_dict[conversation][2]}" \
                      f"{conversations_dict[conversation][0]}" \
                      f"{conversations_dict[conversation][5]}" \
-                     f'<i>{"".join(reversed(conversations_dict[conversation][6]))}</i>' \
+                     f'\nСообщение: <i>{conversations_dict[conversation][6]}</i>' \
                      f"\n{conversations_dict[conversation][7]}"
         text.append(micro_text)
         doc_ids.append(conversation)

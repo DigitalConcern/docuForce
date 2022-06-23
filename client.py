@@ -58,7 +58,7 @@ async def get_access(refresh_token, user_id) -> str:
     if response.status_code != 200:
         data = (await ActiveUsers.filter(user_id=user_id).values_list("login", "password"))[0]
         tokens = await sign_in(login=data[0], password=data[1])
-        await ActiveUsers.filter(user_id=user_id).update(refresh_token=tokens[1])
+        await ActiveUsers.filter(user_id=user_id).update(refresh_token=tokens[1],access_token=tokens[0])
         return tokens[0]
     else:
         access = response.json()["access"]
@@ -190,9 +190,10 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     async with httpx.AsyncClient() as requests:
         page_response = await requests.get(url=page_url, headers=headers)
     while page_response.status_code != 200:
-        await get_access(refresh_token=refresh_token, user_id=user_id)
-        headers = {"Access-Token": f"{access_token}"}
-        page_response = await requests.get(url=page_url, headers=headers)
+
+        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
+        async with httpx.AsyncClient() as requests:
+            page_response = await requests.get(url=page_url, headers=headers)
     len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
     # документа, при этом её больше особо ниоткуда не вытащишь
     # *****************, я в шоке
@@ -218,6 +219,10 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     async with httpx.AsyncClient() as requests:
         type_response = await requests.get(url=task_type_url, headers=headers)
+    while type_response.status_code != 200:
+        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
+        async with httpx.AsyncClient() as requests:
+            type_response = await requests.get(url=task_type_url, headers=headers)
     types_response_json = type_response.json()
 
     doc_task_name = ""
@@ -425,7 +430,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     return result
 
 
-async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
+async def get_conversations_dict_old(access_token, refresh_token, org_id, user_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
@@ -532,6 +537,116 @@ async def get_conversations_dict(access_token, refresh_token, org_id, user_id):
                                                      conversation["task"]["author"]["oguid"],
                                                      len(messages[conversation["document"]["oguid"]])
                                                      )  # Найти какие данные нужно вытащить из тасков
+    return result
+
+
+async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
+    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+
+    params = {'showMode': "TODOS_ONLY",
+              'isCompleted': "false"}
+
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
+    while response.status_code != 200:
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
+
+    types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
+    types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
+    async with httpx.AsyncClient() as requests:
+        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
+
+    response_types_list = response_types.json()
+    tasks = response.json()
+
+    result = {}
+    ctr = 0
+    for task in tasks:
+        try:
+            cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                task["document"]["fields"]["currency"]) + "\n "
+        except:
+            cost = ""
+        try:
+            org__name = task["document"]["fields"]["contractor"] + "\n"
+        except:
+            org__name = ""
+        try:
+            data = " От " + datetime.datetime.fromtimestamp(
+                task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
+        except:
+            data = ""
+        try:
+            doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
+            if data == "":
+                doc_index += "\n"
+        except:
+            doc_index = ""
+        other_fields = ""
+        try:
+            doc_key = str(task["document"]["type"])
+            meta_url = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
+            async with httpx.AsyncClient() as requests:
+                meta_response = await requests.get(url=meta_url, headers=headers)
+            try:
+                doc_name = meta_response.json()["titles"]["ru"]
+            except:
+                try:
+                    doc_name = meta_response.json()["title"]
+                except:
+                    doc_name = meta_response.json()["titles"]["en"]
+            other_fields = ""
+            try:
+                for field in meta_response.json()["fields"]:
+                    if field["formProperties"]["form"]["visible"] and (
+                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+                                                 "documentNumber"]):
+                        try:
+                            other_fields += field["component"]["label"] + ": " + str(
+                                task["document"]["fields"][field["key"]])
+                        except:
+                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                task["document"]["fields"][field["key"]]) + "\n"
+                        print(other_fields)
+            except:
+                pass
+        except:
+            doc_name = ""
+        stage = "\n" + f"Статус: <b>Завершено</b>\n"
+        for stage_type in response_types_list:
+            try:
+                if stage_type["type"] == task["document"]['flowStageType']:
+                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
+            except KeyError:
+                stage = ""
+        try:
+            comment = "\n" + task["task"]["description"]+"\n"
+        except KeyError:
+            comment = ""
+
+        try:
+            author = "\n" + "От кого: " + task["task"]["author"]["name"] + " " + task["task"]["author"][
+                "surname"]
+        except KeyError:
+            author = ""
+        message = (comment + author)
+
+        result[f"{ctr}"] = (cost,
+                            org__name,
+                            data,
+                            doc_index,
+                            doc_name,
+                            other_fields,
+                            message,
+                            stage,
+                            task["task"]["oguid"],
+                            task["task"]["author"]["oguid"])
+
+        ctr += 1
     return result
 
 

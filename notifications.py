@@ -219,9 +219,9 @@ async def msg_instant(user_id: int, manager: DialogManager):
 
 async def loop_notifications_8hrs(user_id, manager):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_8hrs(user_id=user_id, manager=manager), name=str(user_id))
+    # loop.create_task(msg_8hrs(user_id=user_id, manager=manager), name=str(user_id))
 
 
 async def loop_notifications_instant(user_id, manager):
     loop = asyncio.get_event_loop()
-    loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
+    # loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
