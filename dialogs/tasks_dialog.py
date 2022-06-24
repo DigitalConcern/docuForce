@@ -72,7 +72,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     else:
         if dialog_manager.current_context().dialog_data["len"] <= 1:
             dialog_manager.current_context().dialog_data["is_not_last"] = False
-
+        if dialog_manager.current_context().dialog_data["len"] == 1:
+            dialog_manager.current_context().dialog_data["is_not_one"] = False
         dialog_manager.current_context().dialog_data["text"] = text
         dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data.get(
             "counter", 0)
