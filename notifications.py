@@ -324,7 +324,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
         for conv_key in conversations.keys():
             messages_in_conv[conv_key] = conversations[conv_key][10]
 
-        await asyncio.sleep(5*60)
+        await asyncio.sleep(20)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -374,6 +374,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
+            await manager.bg().start(TasksSG.choose_action)
 
 async def loop_notifications_8hrs(user_id, manager):
     loop = asyncio.get_event_loop()
@@ -382,4 +383,4 @@ async def loop_notifications_8hrs(user_id, manager):
 
 async def loop_notifications_instant(user_id, manager):
     loop = asyncio.get_event_loop()
-    # loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
+    loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
