@@ -14,14 +14,19 @@ from dialogs.view_doc_dialog import ViewDocSG
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
-                                                                                        "organization", "user_org_id"))[0]
-    refresh_token, access_token, organization,user_org_id = data[0], data[1], data[2],data[3]
+                                                                                        "organization", "user_org_id",
+                                                                                        "new_tasks"))[
+        0]
+    refresh_token, access_token, organization, user_org_id, curr_tasks = data[0], data[1], data[2], data[3], data[4]
+
+    dialog_manager.current_context().dialog_data["curr_tasks"] = dialog_manager.current_context().dialog_data.get(
+        "curr_tasks", curr_tasks)
+
     dialog_manager.current_context().dialog_data["tasks_dict"] = dialog_manager.current_context().dialog_data.get(
         "tasks_dict", "")
-    dialog_manager.current_context().dialog_data["user_org_id"]=user_org_id
+    dialog_manager.current_context().dialog_data["user_org_id"] = user_org_id
     if dialog_manager.current_context().dialog_data["tasks_dict"] == "":
         wait_msg_id = (
             await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
@@ -34,9 +39,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         tasks_dict = dialog_manager.current_context().dialog_data["tasks_dict"]
     text = []
     doc_ids = []
-    yes_names=[]
-    task_types=[]
-    task_ids=[]
+    yes_names = []
+    task_types = []
+    task_ids = []
     for task in tasks_dict.keys():
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
@@ -48,9 +53,14 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
         pass
-    dialog_manager.current_context().dialog_data[
-        "len"]=len(text)
-    if len(text) == 0:
+
+    dialog_manager.current_context().dialog_data["len"] = len(text)
+
+    if dialog_manager.current_context().dialog_data["curr_tasks"] > 0:
+        dialog_manager.current_context().dialog_data["len"] = dialog_manager.current_context().dialog_data["curr_tasks"]
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(new_tasks=0)
+
+    if dialog_manager.current_context().dialog_data["len"] == 0:
         current_page = "На данный момент у Вас нет активных задач!"
         return {
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
@@ -60,7 +70,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'have_tasks': False
         }
     else:
-        if len(text) <= 1:
+        if dialog_manager.current_context().dialog_data["len"] <= 1:
             dialog_manager.current_context().dialog_data["is_not_last"] = False
 
         dialog_manager.current_context().dialog_data["text"] = text
@@ -70,12 +80,17 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             "yes_name", "Да")
         dialog_manager.current_context().dialog_data["task_id"] = dialog_manager.current_context().dialog_data.get(
             "task_id", "")
-        dialog_manager.current_context().dialog_data["task_id"]=task_ids[dialog_manager.current_context().dialog_data["counter"]]
-        dialog_manager.current_context().dialog_data["task_type_service"] = dialog_manager.current_context().dialog_data.get(
+        dialog_manager.current_context().dialog_data["task_id"] = task_ids[
+            dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data[
+            "task_type_service"] = dialog_manager.current_context().dialog_data.get(
             "task_type_service", "")
-        dialog_manager.current_context().dialog_data["task_type_service"]=task_types[dialog_manager.current_context().dialog_data["counter"]]
-        dialog_manager.current_context().dialog_data["yes_name"] = yes_names[dialog_manager.current_context().dialog_data["counter"]]
-        dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["task_type_service"] = task_types[
+            dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["yes_name"] = yes_names[
+            dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[
+            dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_page"] = current_page
         return {
@@ -84,7 +99,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
             'have_tasks': True,
             'user_counter': dialog_manager.current_context().dialog_data.get("counter", 0) + 1,
-            'len': dialog_manager.current_context().dialog_data.get("len", len(text)),
+            'len': dialog_manager.current_context().dialog_data.get("len", 0),
             'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
             'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),
         }
@@ -98,7 +113,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] +1 == len(
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
                     dialog_manager.current_context().dialog_data["text"]):
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
@@ -120,7 +135,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
             dialog_manager.current_context().dialog_data["is_not_first"] = False
         case "fin":
             dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
-                "len"]-1
+                                                                          "len"] - 1
             dialog_manager.current_context().dialog_data["is_not_last"] = False
             dialog_manager.current_context().dialog_data["is_not_first"] = True
 
@@ -133,6 +148,8 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
     await dialog_manager.start(ViewDocSG.choose_action)
+
+
 async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
@@ -158,7 +175,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                     att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
                                     doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
                                     user_id=dialog_manager.event.from_user.id)
-            msg_text+="Документ "
+            msg_text += "Документ "
             msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
                                                user_id=dialog_manager.event.from_user.id,
                                                doc_task_type=dialog_manager.current_context().dialog_data[
@@ -175,6 +192,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
 
     await dialog_manager.done()
+
 
 class TasksSG(StatesGroup):
     choose_action = State()

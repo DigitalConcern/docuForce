@@ -17,35 +17,12 @@ class ActiveUsers(Model):
     conversations_amount = fields.IntField(default=0)
     eight_hour_notification = fields.BooleanField(default=False)
     instant_notification = fields.BooleanField(default=True)
+    new_tasks = fields.IntField(default=0)
+    new_convs = fields.IntField(default=0)
 
     class Meta:
         table = "users"
 
-
-async def run():
-    await Tortoise.init(
-        config={
-            "connections": {
-                "default": {
-                    "engine": "tortoise.backends.asyncpg",
-                    "credentials": {
-                        "database": "d21crbfi20lfgt",
-                        "host": "ec2-52-212-228-71.eu-west-1.compute.amazonaws.com",
-                        "password": "78ebf737332e11b62f868e64a5a1445d523d768b95deb51b148127f01ee0b026",
-                        "port": 5432,
-                        "user": "ifkppiqumhvrja"
-                    }
-                }
-            },
-            "apps": {
-                "models": {
-                    "models": ["database"],
-                    "default_connection": "default",
-                }
-            },
-        }
-    )
-    await Tortoise.generate_schemas()
 
 # async def run():
 #     await Tortoise.init(
@@ -54,11 +31,11 @@ async def run():
 #                 "default": {
 #                     "engine": "tortoise.backends.asyncpg",
 #                     "credentials": {
-#                         "database": "postgres",
-#                         "host": "localhost",
-#                         "password": "12345",
+#                         "database": "d21crbfi20lfgt",
+#                         "host": "ec2-52-212-228-71.eu-west-1.compute.amazonaws.com",
+#                         "password": "78ebf737332e11b62f868e64a5a1445d523d768b95deb51b148127f01ee0b026",
 #                         "port": 5432,
-#                         "user": "postgres"
+#                         "user": "ifkppiqumhvrja"
 #                     }
 #                 }
 #             },
@@ -71,6 +48,32 @@ async def run():
 #         }
 #     )
 #     await Tortoise.generate_schemas()
+
+
+async def run():
+    await Tortoise.init(
+        config={
+            "connections": {
+                "default": {
+                    "engine": "tortoise.backends.asyncpg",
+                    "credentials": {
+                        "database": "postgres",
+                        "host": "localhost",
+                        "password": "12345",
+                        "port": 5432,
+                        "user": "postgres"
+                    }
+                }
+            },
+            "apps": {
+                "models": {
+                    "models": ["database"],
+                    "default_connection": "default",
+                }
+            },
+        }
+    )
+    await Tortoise.generate_schemas()
 
 
 async def loop_db():
