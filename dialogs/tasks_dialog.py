@@ -42,6 +42,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     yes_names = []
     task_types = []
     task_ids = []
+    doc_att_ids = []
     for task in tasks_dict.keys():
         micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
         text.append(micro_text)
@@ -49,6 +50,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         yes_names.append(tasks_dict[task][8])
         task_types.append(tasks_dict[task][9])
         task_ids.append(tasks_dict[task][10])
+        doc_att_ids.append(tasks_dict[task][11])
     try:
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
@@ -90,7 +92,9 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["yes_name"] = yes_names[
             dialog_manager.current_context().dialog_data["counter"]]
-        dialog_manager.current_context().dialog_data["current_doc"] = doc_ids[
+        dialog_manager.current_context().dialog_data["current_doc_id"] = doc_ids[
+            dialog_manager.current_context().dialog_data["counter"]]
+        dialog_manager.current_context().dialog_data["doc_att_id"] = doc_att_ids[
             dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_page"] = current_page
@@ -143,7 +147,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await ActiveUsers.filter(user_id=c.from_user.id).update(
-        current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
+        current_document_id=dialog_manager.current_context().dialog_data["current_doc_id"])
     dialog_manager.current_context().dialog_data["tasks_dict"] = ""
     dialog_manager.current_context().dialog_data["counter"] = 0
     dialog_manager.current_context().dialog_data["is_not_first"] = False
@@ -173,8 +177,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                     refresh_token=refresh_token,
                                     org_id=organization,
                                     user_oguid=dialog_manager.current_context().dialog_data["user_org_id"],
-                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
-                                    doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
+                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],  # Блин треш
+                                    doc_id=dialog_manager.current_context().dialog_data["current_doc_id"],
                                     user_id=dialog_manager.event.from_user.id)
             msg_text += "Документ "
             msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,

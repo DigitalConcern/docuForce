@@ -203,6 +203,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                             button,
                             task["task"]["type"],
                             task["task"]["oguid"],
+                            task["document"]["documentAttachmentOguid"],
                             )  # Найти какие данные нужно вытащить из тасков
         ctr += 1
     return result
@@ -695,7 +696,8 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                             stage,
                             task["task"]["oguid"],
                             task["task"]["author"]["oguid"],
-                            task["document"]["oguid"])
+                            task["document"]["oguid"],
+                            )
 
         ctr += 1
     return result

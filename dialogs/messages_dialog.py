@@ -24,13 +24,15 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     #     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
-                                                                                        "organization"))[0]
-    refresh_token, access_token, organization = data[0], data[1], data[2]
+                                                                                        "organization","new_convs"))[0]
+    refresh_token, access_token, organization, curr_convs = data[0], data[1], data[2],data[3]
 
     dialog_manager.current_context().dialog_data[
         "conversations_dict"] = dialog_manager.current_context().dialog_data.get(
         "conversations_dict", "")
-
+    dialog_manager.current_context().dialog_data[
+        "curr_convs"] = dialog_manager.current_context().dialog_data.get(
+        "curr_convs", curr_convs)
     if dialog_manager.current_context().dialog_data["conversations_dict"] == "":
         wait_msg_id = (
             await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
@@ -63,7 +65,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
     except:
         pass
-    if len(text) == 0:
+    dialog_manager.current_context().dialog_data["len"] = len(text)
+    if dialog_manager.current_context().dialog_data["curr_convs"] > 0:
+        dialog_manager.current_context().dialog_data["len"] = dialog_manager.current_context().dialog_data["curr_convs"]
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(new_convs=0)
+
+    if dialog_manager.current_context().dialog_data["len"] == 0:
         current_page = "На данный момент у Вас нет сообщений!"
         return {
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
@@ -72,7 +79,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'have_tasks': False
         }
     else:
-        if len(text) <= 1:
+        if dialog_manager.current_context().dialog_data["len"] <= 1:
             dialog_manager.current_context().dialog_data["is_not_last"] = False
 
         dialog_manager.current_context().dialog_data["text"] = text
@@ -103,8 +110,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
             if dialog_manager.current_context().dialog_data["counter"] > 0:
@@ -116,8 +122,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                     dialog_manager.current_context().dialog_data["counter"]]
             if dialog_manager.current_context().dialog_data["counter"] == 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = False
-            if dialog_manager.current_context().dialog_data["counter"] < len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
 
 
