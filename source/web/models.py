@@ -20,3 +20,17 @@ class ActiveUsers(models.Model):
 
     class Meta:
         db_table = "users"
+
+
+class Stats(models.Model):
+    users = models.IntegerField(default=0)
+    documents = models.IntegerField(default=0)
+    com_tasks = models.IntegerField(default=0)
+    command_documents = models.IntegerField(default=0)
+    command_search = models.IntegerField(default=0)
+    command_messages = models.IntegerField(default=0)
+    tasks_done = models.IntegerField(default=0)
+    messages_done = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "stats"
