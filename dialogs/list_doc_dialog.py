@@ -146,8 +146,8 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
 
-    documents = (await Stats.filters(id=0).values_list("documents", flat=True))[0]
-    await Stats.filters(id=0).update(documents=documents + 1)
+    documents = (await Stats.filter(id=0).values_list("documents", flat=True))[0]
+    await Stats.filter(id=0).update(documents=documents + 1)
 
     await dialog_manager.start(ViewDocSG.choose_action)
 
