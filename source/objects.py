@@ -25,20 +25,8 @@ class MyServer:
 
     @classmethod
     def run(cls):
-        # asyncio.run(cls.on_startup())
         asyncio.run(cls.server.serve())
-        # asyncio.run(cls.on_shutdown())
 
-
-    # @staticmethod
-    # async def on_startup() -> None:
-    #     InjectMiddleware.inject_params = dict(bot=MyBot.bot)
-    #
-    #     await register_apps()
-
-    # @staticmethod
-    # async def on_shutdown() -> None:
-    #     pass
 
 
 def run_app():
