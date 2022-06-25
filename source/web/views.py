@@ -8,5 +8,6 @@ class StatsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users'] = models.Stats.objects.filter(id=0)
+        context['users'] = models.Stats.objects.values_list("users", flat=True).get(pk=0)
+        context['documents'] = models.Stats.objects.values_list("documents", flat=True).get(pk=0)
         return context
