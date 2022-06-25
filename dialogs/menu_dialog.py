@@ -71,8 +71,8 @@ async def document_search(m: Message, dialog_manager: DialogManager):
             user_id=m.from_user.id)
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
-        command_search = (await ActiveUsers.all().values_list("command_search", flat=True))[0]
-        await ActiveUsers.all().update(command_search=command_search + 1)
+        command_search = (await Stats.all().values_list("command_search", flat=True))[0]
+        await Stats.all().update(command_search=command_search + 1)
 
         await dialog_manager.start(ListDocSG.find, mode=StartMode.RESET_STACK)
 
@@ -87,8 +87,8 @@ async def document_list(m: Message, dialog_manager: DialogManager):
             user_id=m.from_user.id)
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
-        command_documents = (await ActiveUsers.all().values_list("command_tasks", flat=True))[0]
-        await ActiveUsers.all().update(command_documents=command_documents + 1)
+        command_documents = (await Stats.all().values_list("command_tasks", flat=True))[0]
+        await Stats.all().update(command_documents=command_documents + 1)
 
         await dialog_manager.start(ListDocSG.choose_action, mode=StartMode.RESET_STACK)
 
@@ -114,8 +114,8 @@ async def messages(m: Message, dialog_manager: DialogManager):
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_messages = (
-            await ActiveUsers.all().values_list("command_messages", flat=True))[0]
-        await ActiveUsers.all().update(command_search=command_messages + 1)
+            await Stats.all().values_list("command_messages", flat=True))[0]
+        await Stats.all().update(command_search=command_messages + 1)
 
         await dialog_manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
 
