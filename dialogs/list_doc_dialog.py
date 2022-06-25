@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.media import StaticMedia
 from bot import DynamicMedia, MyBot
 from aiogram_dialog.widgets.text import Const, Format
 
-from database import ActiveUsers
+from database import ActiveUsers, Stats
 from client import get_doc_list
 from .view_doc_dialog import ViewDocSG
 
@@ -146,8 +146,8 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
 
-    documents = (await ActiveUsers.filter(user_id=dialog_manager.current_context().dialog_data["id"]).values_list("documents", flat=True))[0]
-    await ActiveUsers.filter(user_id=dialog_manager.current_context().dialog_data["id"]).update(documents=documents + 1)
+    documents = (await Stats.all().values_list("documents", flat=True))[0]
+    await Stats.all().update(documents=documents + 1)
 
     await dialog_manager.start(ViewDocSG.choose_action)
 

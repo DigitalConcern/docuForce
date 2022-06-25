@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Star
 from aiogram_dialog.widgets.text import Const, Format
 
 from client import get_orgs_dict, get_tasks_dict, post_doc_action, post_doc_sign, get_task_caption
-from database import ActiveUsers
+from database import ActiveUsers, Stats
 from bot import MyBot
 from dialogs.view_doc_dialog import ViewDocSG
 
@@ -155,8 +155,8 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
 
-    documents = (await ActiveUsers.all().values_list("documents", flat=True))[0]
-    await ActiveUsers.all().update(documents=documents + 1)
+    documents = (await Stats.all().values_list("documents", flat=True))[0]
+    await Stats.all().update(documents=documents + 1)
 
     await dialog_manager.start(ViewDocSG.choose_action)
 
@@ -202,8 +202,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                    'task_type_service'], org_id=organization, is_done=False)
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
 
-    task_done = (await ActiveUsers.all().values_list("task_done", flat=True))[0]
-    await ActiveUsers.all().update(task_done=task_done + 1)
+    task_done = (await Stats.all().values_list("task_done", flat=True))[0]
+    await Stats.all().update(task_done=task_done + 1)
 
     await dialog_manager.done()
 

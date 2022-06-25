@@ -13,7 +13,7 @@ import os
 
 from bot import MyBot, DynamicMedia
 from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict, get_file, get_task_caption
-from database import ActiveUsers
+from database import ActiveUsers, Stats
 
 
 class ViewDocSG(StatesGroup):
@@ -149,6 +149,9 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=False)
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
+
+    documents = (await Stats.all().values_list("command_tasks", flat=True))[0]
+    await Stats.all().update(command_tasks=command_tasks + 1)
 
     await dialog_manager.done()
 

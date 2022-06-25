@@ -8,7 +8,7 @@ from aiogram_dialog import DialogManager, StartMode
 
 from bot import MyBot
 from client import get_access
-from database import ActiveUsers
+from database import ActiveUsers, Stats
 from notifications import loop_notifications_8hrs, loop_notifications_instant
 from .auth_dialog import AuthSG
 from .messages_dialog import MessagesSG
@@ -55,8 +55,8 @@ async def tasks(m: Message, dialog_manager: DialogManager):
         await get_access(refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],user_id=m.from_user.id)
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
-        command_tasks = (await ActiveUsers.all().values_list("command_tasks", flat=True))[0]
-        await ActiveUsers.all().update(command_tasks=command_tasks + 1)
+        command_tasks = (await Stats.all().values_list("command_tasks", flat=True))[0]
+        await Stats.all().update(command_tasks=command_tasks + 1)
 
         await dialog_manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
 
