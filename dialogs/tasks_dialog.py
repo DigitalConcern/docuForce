@@ -154,6 +154,10 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     dialog_manager.current_context().dialog_data["counter"] = 0
     dialog_manager.current_context().dialog_data["is_not_first"] = False
     dialog_manager.current_context().dialog_data["is_not_last"] = True
+
+    documents = (await ActiveUsers.all().values_list("documents", flat=True))[0]
+    await ActiveUsers.all().update(documents=documents + 1)
+
     await dialog_manager.start(ViewDocSG.choose_action)
 
 
@@ -197,6 +201,9 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=False)
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
+
+    task_done = (await ActiveUsers.all().values_list("task_done", flat=True))[0]
+    await ActiveUsers.all().update(task_done=task_done + 1)
 
     await dialog_manager.done()
 

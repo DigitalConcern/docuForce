@@ -7,12 +7,15 @@ from tortoise.models import Model
 class Stats(Model):
     users = fields.IntField(default=0)
     documents = fields.IntField(default=0)
-    com_tasks = fields.IntField(default=0)
+    command_tasks = fields.IntField(default=0)
     command_documents = fields.IntField(default=0)
     command_search = fields.IntField(default=0)
     command_messages = fields.IntField(default=0)
     tasks_done = fields.IntField(default=0)
     messages_done = fields.IntField(default=0)
+
+    class Meta:
+        table = "stats"
 
 
 class ActiveUsers(Model):

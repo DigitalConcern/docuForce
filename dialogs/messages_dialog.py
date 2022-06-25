@@ -177,6 +177,9 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
     await MyBot.bot.send_message(m.from_user.id,
                                  f"Сообщение:\n<i>{m.text}</i>\nДля пользователя {dialog_manager.current_context().dialog_data['current_author_for_resp']}\nОтправлено!", parse_mode=ParseMode.HTML)
 
+    messages_done = (await ActiveUsers.all().values_list("messages_done", flat=True))[0]
+    await ActiveUsers.all().update(messages_done=messages_done + 1)
+
     await dialog_manager.done()
 
     await asyncio.sleep(1)
@@ -201,6 +204,9 @@ async def close_msg(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     await MyBot.bot.send_message(m.from_user.id,
                                  f"Диалог с пользователем {dialog_manager.current_context().dialog_data['current_author_for_resp']}\nЗавершен!")
 
+    messages_done = (await ActiveUsers.all().values_list("messages_done", flat=True))[0]
+    await ActiveUsers.all().update(messages_done=messages_done + 1)
+
     await dialog_manager.done()
 
     await asyncio.sleep(1)
@@ -212,6 +218,10 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
     await ActiveUsers.filter(user_id=c.from_user.id).update(
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
     dialog_manager.current_context().dialog_data["conversations_dict"] = ""
+
+    documents = (await ActiveUsers.all().values_list("documents", flat=True))[0]
+    await ActiveUsers.all().update(documents=documents + 1)
+
     await dialog_manager.start(ViewDocSG.choose_action)
 
 
