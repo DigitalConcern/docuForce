@@ -416,7 +416,8 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     if contained_string == "":
         params = {}
     else:
-        params = {"query.like": contained_string}
+        params = {"query.like": contained_string,
+                  'perPage': 100, }
 
     async with httpx.AsyncClient() as requests:
         response = await requests.get(url=url, headers=headers, params=params)
