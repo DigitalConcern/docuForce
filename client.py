@@ -86,24 +86,6 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
     return result
 
 
-# async def get_task_button(access_token, refresh_token, user_id, doc_task_type, org_id):
-#     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
-#     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-#     async with httpx.AsyncClient() as requests:
-#         type_response = await requests.get(url=task_type_url, headers=headers)
-#     while type_response.status_code != 200:
-#         headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
-#         async with httpx.AsyncClient() as requests:
-#             type_response = await requests.get(url=task_type_url, headers=headers)
-#     types_response_json = type_response.json()
-#
-#     doc_task_name = ""
-#     for type in types_response_json:
-#         if type["type"] == doc_task_type:
-#             doc_task_name = type["buttonCaption"]
-#     return doc_task_name
-
-
 async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
