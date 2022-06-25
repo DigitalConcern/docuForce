@@ -150,8 +150,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                    'task_type_service'], org_id=organization, is_done=False)
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
 
-    documents = (await Stats.all().values_list("command_tasks", flat=True))[0]
-    await Stats.all().update(command_tasks=command_tasks + 1)
+    documents = (await Stats.filters(id=0).values_list("command_tasks", flat=True))[0]
+    await Stats.filters(id=0).update(command_tasks=command_tasks + 1)
 
     await dialog_manager.done()
 

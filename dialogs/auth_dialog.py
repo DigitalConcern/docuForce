@@ -54,8 +54,8 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
         await dialog_manager.done()
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизировались! ✅")
 
-        users = (await Stats.all().values_list("users", flat=True))[0]
-        await Stats.all().update(users=users + 1)
+        users = (await Stats.filters(id=0).values_list("users", flat=True))[0]
+        await Stats.filters(id=0).update(users=users + 1)
 
         await loop_notifications_instant(user_id=m.from_user.id, manager=dialog_manager)
 
