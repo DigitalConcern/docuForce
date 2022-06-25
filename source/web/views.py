@@ -10,12 +10,11 @@ from . import forms
 from django.utils.translation import gettext as _
 
 
-class UsersPageView(TemplateView):
-    model = models.ActiveUsers
-    template_name = 'users.html'
+class StatsView(TemplateView):
+    model = models.Stats
+    template_name = "stats.html"
 
-    # fields = ['user_id', 'code_name']
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users'] = models.ActiveUsers.objects.all()
+        context['stats'] = models.Stats.objects.all()
         return context
