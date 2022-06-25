@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ParseMode
 
@@ -198,6 +200,10 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
 
     await dialog_manager.done()
 
+    await asyncio.sleep(1)
+
+    await dialog_manager.dialog().switch_to(TasksSG.choose_action)
+
 
 class TasksSG(StatesGroup):
     choose_action = State()
@@ -206,8 +212,19 @@ class TasksSG(StatesGroup):
 tasks_dialog = Dialog(
     Window(
         Format('{current_page}'),
+        Row(
+            Button(Format("{yes_name} ✅"),
+                   id="yes",
+                   on_click=do_task
+                   ),
+            Button(Format("Отказать ❌"),
+                   id="no",
+                   on_click=do_task
+                   ),
+
+        ),
         Button(
-            Format("Просмотр документа"),
+            Format("Просмотр документа 📄"),
             when="have_tasks",
             id="doc",
             on_click=go_to_doc
@@ -233,18 +250,6 @@ tasks_dialog = Dialog(
                    when="is_not_last",
                    on_click=switch_pages),
         ),
-        Row(
-            Button(Format("{yes_name} ✅"),
-                   id="yes",
-                   on_click=do_task
-                   ),
-            Button(Format("Отказать ❌"),
-                   id="no",
-                   on_click=do_task
-                   ),
-
-        ),
-        # Cancel(Const("⏪ Назад")),
         state=TasksSG.choose_action,
         getter=get_data,
         parse_mode=ParseMode.HTML

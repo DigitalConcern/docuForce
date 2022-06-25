@@ -86,22 +86,22 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
     return result
 
 
-async def get_task_button(access_token, refresh_token, user_id, doc_task_type, org_id):
-    task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
-    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    async with httpx.AsyncClient() as requests:
-        type_response = await requests.get(url=task_type_url, headers=headers)
-    while type_response.status_code != 200:
-        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
-        async with httpx.AsyncClient() as requests:
-            type_response = await requests.get(url=task_type_url, headers=headers)
-    types_response_json = type_response.json()
-
-    doc_task_name = ""
-    for type in types_response_json:
-        if type["type"] == doc_task_type:
-            doc_task_name = type["buttonCaption"]
-    return doc_task_name
+# async def get_task_button(access_token, refresh_token, user_id, doc_task_type, org_id):
+#     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
+#     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+#     async with httpx.AsyncClient() as requests:
+#         type_response = await requests.get(url=task_type_url, headers=headers)
+#     while type_response.status_code != 200:
+#         headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
+#         async with httpx.AsyncClient() as requests:
+#             type_response = await requests.get(url=task_type_url, headers=headers)
+#     types_response_json = type_response.json()
+#
+#     doc_task_name = ""
+#     for type in types_response_json:
+#         if type["type"] == doc_task_type:
+#             doc_task_name = type["buttonCaption"]
+#     return doc_task_name
 
 
 async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
@@ -189,9 +189,10 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
             except KeyError:
                 stage = ""
         try:
-            button= await get_task_button(doc_task_type=task["document"]['flowStageType'],org_id=org_id,access_token=access_token,refresh_token=refresh_token,user_id=user_id)
+            button = await get_task_button(doc_task_type=task["document"]['flowStageType'], org_id=org_id,
+                                           access_token=access_token, refresh_token=refresh_token, user_id=user_id)
         except:
-            button=""
+            button = ""
         result[f"{ctr}"] = (cost,
                             org__name,
                             data,
@@ -226,7 +227,8 @@ async def get_task_button(access_token, refresh_token, user_id, doc_task_type, o
             doc_task_name = type["buttonCaption"]
     return doc_task_name
 
-async def get_task_caption(access_token, refresh_token, user_id, doc_task_type, org_id,is_done):
+
+async def get_task_caption(access_token, refresh_token, user_id, doc_task_type, org_id, is_done):
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     async with httpx.AsyncClient() as requests:
@@ -245,6 +247,28 @@ async def get_task_caption(access_token, refresh_token, user_id, doc_task_type, 
             else:
                 doc_task_name = type["declinedCaption"]
     return doc_task_name
+
+
+# async def get_message_caption(access_token, refresh_token, user_id, doc_task_type, org_id, is_done):
+#     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
+#     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+#     async with httpx.AsyncClient() as requests:
+#         type_response = await requests.get(url=task_type_url, headers=headers)
+#     while type_response.status_code != 200:
+#         headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
+#         async with httpx.AsyncClient() as requests:
+#             type_response = await requests.get(url=task_type_url, headers=headers)
+#     types_response_json = type_response.json()
+#
+#     doc_task_name = ""
+#     for type in types_response_json:
+#         if type["type"] == doc_task_type:
+#             if is_done:
+#                 doc_task_name = type["solvedCaption"]
+#             else:
+#                 doc_task_name = type["declinedCaption"]
+#     return doc_task_name
+
 
 async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, page):
     headers = {"Access-Token": f"{access_token}"}
@@ -619,7 +643,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     for task in tasks:
         try:
             cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
-                task["document"]["fields"]["currency"]) + "\n "
+                task["document"]["fields"]["currency"])
         except:
             cost = ""
         try:
@@ -632,7 +656,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             data = ""
         try:
-            doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
+            doc_index = " №" + str(task["document"]["fields"]["documentNumber"])
             if data == "":
                 doc_index += "\n"
         except:
@@ -667,24 +691,24 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                 pass
         except:
             doc_name = ""
-        stage = "\n" + f"Статус: <b>Завершено</b>\n"
+        stage = "\n" + f"Статус: <b>Завершено</b>"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == task["document"]['flowStageType']:
-                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
+                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>"
             except KeyError:
                 stage = ""
         try:
-            comment = "\n" + task["task"]["description"] + "\n"
+            comment = "\n" + task["task"]["description"]
         except KeyError:
             comment = ""
 
         try:
-            author = "\n" + "От кого: " + task["task"]["author"]["name"] + " " + task["task"]["author"][
-                "surname"]
+            author = "\n" + "От кого: " + task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
         except KeyError:
             author = ""
         message = (comment + author)
+        author_for_resp = task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
 
         result[f"{ctr}"] = (cost,
                             org__name,
@@ -697,6 +721,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                             task["task"]["oguid"],
                             task["task"]["author"]["oguid"],
                             task["document"]["oguid"],
+                            author_for_resp
                             )
 
         ctr += 1

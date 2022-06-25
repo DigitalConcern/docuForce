@@ -110,15 +110,19 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
     counter = 0
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
-                                                                      "tasks_amount", "conversations_amount"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
-        tasks_amount, convers_amount = data[3], data[4]
 
         conversations = await get_conversations_dict(user_id=user_id,
                                                      refresh_token=refresh_token,
                                                      access_token=access_token,
                                                      org_id=organization)
+
+        tasks_dict = await get_tasks_dict(user_id=user_id,
+                                          refresh_token=refresh_token,
+                                          access_token=access_token,
+                                          org_id=organization)
+        tasks_amount = len(tasks_dict)
 
         for conv_key in conversations.keys():
             messages_in_conv[conv_key] = conversations[conv_key][10]
@@ -314,10 +318,8 @@ async def old_msg_instant(user_id: int, manager: DialogManager):
 async def msg_instant(user_id: int, manager: DialogManager):
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization",
-                                                                      "tasks_amount", "conversations_amount"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
-        tasks_amount, convers_amount = data[3], data[4]
 
         conversations = await get_conversations_dict(user_id=user_id,
                                                      refresh_token=refresh_token,
@@ -326,6 +328,12 @@ async def msg_instant(user_id: int, manager: DialogManager):
 
         for conv_key in conversations.keys():
             messages_in_conv[conv_key] = conversations[conv_key][10]
+
+        tasks_dict = await get_tasks_dict(user_id=user_id,
+                                          refresh_token=refresh_token,
+                                          access_token=access_token,
+                                          org_id=organization)
+        tasks_amount = len(tasks_dict)
 
         await asyncio.sleep(20)
 
@@ -355,9 +363,9 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
-                await manager.bg().done()
+                await manager.done()
                 await asyncio.sleep(1)
-                await manager.bg().start(MessagesSG.choose_action)
+                await manager.bg().start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
         except KeyError:
             pass
 
@@ -377,14 +385,14 @@ async def msg_instant(user_id: int, manager: DialogManager):
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
-            await manager.bg().done()
+            await manager.done()
             await asyncio.sleep(1)
-            await manager.bg().start(TasksSG.choose_action)
+            await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
 
 
 async def loop_notifications_8hrs(user_id, manager):
     loop = asyncio.get_event_loop()
-    # loop.create_task(msg_8hrs(user_id=user_id, manager=manager), name=str(user_id))
+    loop.create_task(msg_8hrs(user_id=user_id, manager=manager), name=str(user_id))
 
 
 async def loop_notifications_instant(user_id, manager):
