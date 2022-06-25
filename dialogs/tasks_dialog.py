@@ -209,7 +209,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
 
     await asyncio.sleep(1)
 
-    await dialog_manager.dialog().switch_to(TasksSG.choose_action)
+    await dialog_manager.start(TasksSG.choose_action)
 
 
 class TasksSG(StatesGroup):

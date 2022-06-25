@@ -162,16 +162,19 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                                         await MyBot.bot.send_message(user_id,
                                                                      f"У Вас {diff_msgs_in_conv} новых сообщений!")
                             # await manager.start(MessagesSG.choose_action)
-                            msg_arr = new_conversations[conv_key][6][:diff_msgs_in_conv]
-                            micro_text = f"По документу {new_conversations[conv_key][1]}" \
-                                         f"{new_conversations[conv_key][4]}" \
-                                         f"{new_conversations[conv_key][3]}" \
-                                         f"{new_conversations[conv_key][2]}" \
-                                         f"{new_conversations[conv_key][0]}" \
-                                         f"{new_conversations[conv_key][5]}" \
-                                         f'<i>{"".join(reversed(msg_arr))}</i>' \
-                                         f"{new_conversations[conv_key][7]}"
-                            await MyBot.bot.send_message(user_id, text=micro_text, parse_mode=ParseMode.HTML)
+                            # msg_arr = new_conversations[conv_key][6][:diff_msgs_in_conv]
+                            # micro_text = f"По документу {new_conversations[conv_key][1]}" \
+                            #              f"{new_conversations[conv_key][4]}" \
+                            #              f"{new_conversations[conv_key][3]}" \
+                            #              f"{new_conversations[conv_key][2]}" \
+                            #              f"{new_conversations[conv_key][0]}" \
+                            #              f"{new_conversations[conv_key][5]}" \
+                            #              f'<i>{"".join(reversed(msg_arr))}</i>' \
+                            #              f"{new_conversations[conv_key][7]}"
+                            # await MyBot.bot.send_message(user_id, text=micro_text, parse_mode=ParseMode.HTML)
+                            await manager.done()
+                            await asyncio.sleep(1)
+                            await manager.bg().start(MessagesSG.choose_action)
                         else:
                             await MyBot.bot.send_message(user_id, f"Новых сообщений нет!")
                 except KeyError:
@@ -193,12 +196,15 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
                 # await manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
-                text_not_task = "Ваши новые задачи: \n"
-                for ii in range(diff_tasks - 1, -1, -1):
-                    i = str(ii)
-                    text_not_task += f"{new_tasks_dict[i][1]}{new_tasks_dict[i][5]} {new_tasks_dict[i][4]}{new_tasks_dict[i][2]}{new_tasks_dict[i][0]}{new_tasks_dict[i][6]}{new_tasks_dict[i][7]}\n\n"
-
-                await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
+                # text_not_task = "Ваши новые задачи: \n"
+                # for ii in range(diff_tasks - 1, -1, -1):
+                #     i = str(ii)
+                #     text_not_task += f"{new_tasks_dict[i][1]}{new_tasks_dict[i][5]} {new_tasks_dict[i][4]}{new_tasks_dict[i][2]}{new_tasks_dict[i][0]}{new_tasks_dict[i][6]}{new_tasks_dict[i][7]}\n\n"
+                #
+                # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
+                await manager.done()
+                await asyncio.sleep(1)
+                await manager.bg().start(TasksSG.choose_action)
             else:
                 await MyBot.bot.send_message(user_id, f"Новых сообщений нет!")
             counter = 0
@@ -365,7 +371,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                 await manager.done()
                 await asyncio.sleep(1)
-                await manager.bg().start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
+                await manager.bg().start(MessagesSG.choose_action)
         except KeyError:
             pass
 
@@ -387,7 +393,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
             await manager.done()
             await asyncio.sleep(1)
-            await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            await manager.bg().start(TasksSG.choose_action)
 
 
 async def loop_notifications_8hrs(user_id, manager):
