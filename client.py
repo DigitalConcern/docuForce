@@ -628,7 +628,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     ctr = 0
     for task in tasks:
         try:
-            if task["fields"]["sumTotal"] is not None:
+            if task["document"]["fields"]["sumTotal"] is not None:
                 cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
                     task["document"]["fields"]["currency"])
             else:
