@@ -1,1 +1,1 @@
-web: python3 source/objects.py
+web: uvicorn main:app --workers 4
