@@ -19,15 +19,13 @@ asyncio.set_event_loop(loop)
 class MyServer:
     app = get_asgi_application()
 
-    # config = uvicorn.Config(host='0.0.0.0', app=app, loop=loop, port=8080)
-    config = uvicorn.Config(app=app, loop=loop, port=8001)
+    config = uvicorn.Config(host='0.0.0.0', app=app, loop=loop, port=8080)
+    # config = uvicorn.Config(app=app, loop=loop, port=8001)
     server = uvicorn.Server(config=config)
 
     @classmethod
     def run(cls):
         asyncio.run(cls.server.serve())
-
-
 
 def run_app():
     server = Process(target=MyServer.run)
