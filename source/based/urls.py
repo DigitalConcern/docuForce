@@ -17,7 +17,7 @@ import os
 
 from django.contrib import admin
 from django.urls import path, include
-from web import views
+from source.web import views
 
 urlpatterns = [
     path("", views.StatsView.as_view(), name='users'),
