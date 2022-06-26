@@ -1,1 +1,1 @@
-web: uvicorn source.asgi -b 0.0.0.0:$PORT
+web: uvicorn source.asgi --host 0.0.0.0:$PORT
