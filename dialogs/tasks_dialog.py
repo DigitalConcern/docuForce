@@ -228,7 +228,7 @@ tasks_dialog = Dialog(
                    id="no",
                    on_click=do_task
                    ),
-
+when="have_tasks"
         ),
         Button(
             Format("Просмотр документа 📄"),
