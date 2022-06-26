@@ -22,7 +22,7 @@ def main():
     # from objects import run_app
     # run_app()
 
-    execute_from_command_line(sys.argv)
+    # execute_from_command_line(sys.argv)
 
     # from objects import MyServer, run_app
     #
