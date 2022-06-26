@@ -21,5 +21,4 @@ from web import views
 
 urlpatterns = [
     path("", views.StatsView.as_view(), name='users'),
-
 ]
