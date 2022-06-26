@@ -423,7 +423,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                 cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
                     resp["fields"]["currency"]) + "\n"
             else:
-                cost=""
+                cost = ""
         except KeyError:
             cost = ""
         try:
@@ -632,7 +632,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                 cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
                     task["document"]["fields"]["currency"])
             else:
-                cost=""
+                cost = ""
         except:
             cost = ""
         try:
