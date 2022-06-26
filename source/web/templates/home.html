@@ -12,25 +12,118 @@
 
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-     <img src="https://i.ibb.co/B2PCqn6/docuforce.png" alt="docuforce" width="250" border="0">
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="">Statistics</a>
-        </li>
-      </ul>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light" id="navbar">
+    <div class="container-fluid">
+      <img src="https://i.ibb.co/B2PCqn6/docuforce.png" alt="docuforce" width="250" border="0">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse">
+        <ul class="nav nav-pills me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="#scrollspyHeading1">Общая статистика</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#scrollspyHeading2">Команды</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#scrollspyHeading3">Документооборот</a>
+          </li>
+        </ul>
+      </div>
     </div>
+  </nav>
+  <div class="container-md my-4">
+    <ul class="list-group list-group-flush scrollspy-example" data-bs-root-margin="0px 0px -40%" data-bs-spy="scroll" data-bs-target="#navbar" data-bs-smooth-scroll="true" tabindex="0">
+      <li class="list-group-item">
+        <p class="h3" id="scrollspyHeading1">Общая статистика</p>
+      </li>
+        <div class="row mx-3 my-3 gap-3">
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Общее число пользователей</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{users}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество просмотренных документов</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{documents}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+        </div>
+      <li class="list-group-item">
+        <p class="h3" id="scrollspyHeading2">Использование команд</p>
+      </li>
+        <div class="row mx-3 my-3 gap-3">
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество использований команды /tasks</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{command_tasks}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество использований команды /documents</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{command_documents}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество использований команды /messages</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{command_messages}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество использований команды /search</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{command_search}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+        </div>
+      <li class="list-group-item">
+        <p class="h3" id="scrollspyHeading3">Статистика по документообороту</p>
+      </li>
+        <div class="row mx-3 my-3 gap-3">
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество задач, обработанных через бота</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{tasks_done}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title">Количество сообщений, обработанных через бота</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{messages_done}}</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+              </div>
+            </div>
+        </div>
+    </ul>
   </div>
-    </nav>
-    <div class="container-md">
-      {{users}}
-      {{documents}}
-    </div>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
   </body>

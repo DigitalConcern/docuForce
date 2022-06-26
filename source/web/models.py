@@ -25,7 +25,7 @@ class ActiveUsers(models.Model):
 class Stats(models.Model):
     users = models.IntegerField(default=0)
     documents = models.IntegerField(default=0)
-    com_tasks = models.IntegerField(default=0)
+    command_tasks = models.IntegerField(default=0)
     command_documents = models.IntegerField(default=0)
     command_search = models.IntegerField(default=0)
     command_messages = models.IntegerField(default=0)
