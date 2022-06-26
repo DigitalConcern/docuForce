@@ -1,1 +1,1 @@
-web: uvicorn app/source/main:app --workers 4
+web: uvicorn source.asgi -b 0.0.0.0:$PORT
