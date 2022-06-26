@@ -419,8 +419,11 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     response_types_list = response_types.json()
     for resp in resp_list:
         try:
-            cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
-                resp["fields"]["currency"]) + "\n"
+            if resp["fields"]["sumTotal"] is not None:
+                cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
+                    resp["fields"]["currency"]) + "\n"
+            else:
+                cost=""
         except KeyError:
             cost = ""
         try:
@@ -625,8 +628,11 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     ctr = 0
     for task in tasks:
         try:
-            cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
-                task["document"]["fields"]["currency"])
+            if task["fields"]["sumTotal"] is not None:
+                cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                    task["document"]["fields"]["currency"])
+            else:
+                cost=""
         except:
             cost = ""
         try:
