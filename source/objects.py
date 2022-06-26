@@ -20,7 +20,7 @@ class MyServer:
     app = get_asgi_application()
 
     # config = uvicorn.Config(host='0.0.0.0', app=app, loop=loop, port=5000)
-    config = uvicorn.Config(app=app, loop=loop, port=8001)
+    config = uvicorn.Config(app=app, loop=loop)
     server = uvicorn.Server(config=config)
 
     @classmethod
