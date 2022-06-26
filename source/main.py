@@ -1,9 +1,6 @@
-import asyncio
 import logging
 import os
-from multiprocessing import Process
 
-import uvicorn
 from django.core.asgi import get_asgi_application
 
 logging.basicConfig(level=logging.DEBUG)
