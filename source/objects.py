@@ -27,6 +27,7 @@ class MyServer:
     def run(cls):
         asyncio.run(cls.server.serve())
 
+
 def run_app():
     server = Process(target=MyServer.run)
     server.start()
