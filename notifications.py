@@ -370,7 +370,6 @@ async def msg_instant(user_id: int, manager: DialogManager):
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                 await manager.bg().done()
-                await manager.done()
                 await asyncio.sleep(1)
                 await manager.bg().start(MessagesSG.choose_action)
         except KeyError:
@@ -393,7 +392,6 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
             await manager.bg().done()
-            await manager.done()
             await asyncio.sleep(1)
             await manager.bg().start(TasksSG.choose_action)
 
