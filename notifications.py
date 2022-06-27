@@ -172,7 +172,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                             #              f'<i>{"".join(reversed(msg_arr))}</i>' \
                             #              f"{new_conversations[conv_key][7]}"
                             # await MyBot.bot.send_message(user_id, text=micro_text, parse_mode=ParseMode.HTML)
-                            await manager.done()
+                            await manager.bg().done()
                             await asyncio.sleep(1)
                             await manager.bg().start(MessagesSG.choose_action)
                         else:
@@ -202,7 +202,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                 #     text_not_task += f"{new_tasks_dict[i][1]}{new_tasks_dict[i][5]} {new_tasks_dict[i][4]}{new_tasks_dict[i][2]}{new_tasks_dict[i][0]}{new_tasks_dict[i][6]}{new_tasks_dict[i][7]}\n\n"
                 #
                 # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
-                await manager.done()
+                await manager.bg().done()
                 await asyncio.sleep(1)
                 await manager.bg().start(TasksSG.choose_action)
             else:
@@ -341,7 +341,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                           org_id=organization)
         tasks_amount = len(tasks_dict)
 
-        await asyncio.sleep(20)
+        await asyncio.sleep(60)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -370,6 +370,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                 await manager.bg().done()
+                await manager.done()
                 await asyncio.sleep(1)
                 await manager.bg().start(MessagesSG.choose_action)
         except KeyError:
@@ -392,6 +393,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
             await manager.bg().done()
+            await manager.done()
             await asyncio.sleep(1)
             await manager.bg().start(TasksSG.choose_action)
 
