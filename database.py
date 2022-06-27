@@ -31,6 +31,7 @@ class ActiveUsers(Model):
     conversations_amount = fields.IntField(default=0)
     eight_hour_notification = fields.BooleanField(default=False)
     instant_notification = fields.BooleanField(default=True)
+    not_notification = fields.BooleanField(default=False)
     new_tasks = fields.IntField(default=0)
     new_convs = fields.IntField(default=0)
 

@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ParseMode, ContentType
 
@@ -43,13 +45,14 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                               user_id=dialog_manager.event.from_user.id)
             except:
                 pass
+            await asyncio.sleep(0.5)
             dialog_manager.current_context().dialog_data["doc_list"] = doc_list
     else:
         doc_list = dialog_manager.current_context().dialog_data["doc_list"]
     text = []
     doc_ids = []
     for doc in doc_list:
-        micro_text = f"{doc[1]} {doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}{doc[7]}"
+        micro_text = f"{doc[7]}<i>{doc[1]}{doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}</i>"
         text.append(micro_text)
         doc_ids.append(doc[5])
 

@@ -425,7 +425,9 @@ async def start_notifications(user_id: int, manager: DialogManager):
         (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
     instant_notification = \
         (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
-    if not eight_hour_notification and not instant_notification:
+    not_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("not_notification", flat=True))[0]
+    if not eight_hour_notification and not instant_notification and not not_notification:
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
         await loop_notifications_instant(user_id=user_id, manager=manager.bg())
     elif eight_hour_notification:

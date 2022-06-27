@@ -32,7 +32,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     #
     # await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
-    if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1"):
+    if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1") and not radio.is_checked(item_id="2"):
         if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification",
                                                                                             flat=True))[0]:
             await radio.set_checked(item_id="0", event=dialog_manager.event)
@@ -41,28 +41,32 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                                                                                             flat=True))[0]:
             await radio.set_checked(item_id="1", event=dialog_manager.event)
 
+        if not ((await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("instant_notification",
+                                                                                                 flat=True))[0]) and not \
+                ((await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list(
+                    "eight_hour_notification",
+                    flat=True))[0]):
+            await radio.set_checked(item_id="2", event=dialog_manager.event)
+
 
 async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, item_id: str):
     if item_id == '0':
-        try:
-            for task in asyncio.all_tasks():
-                if task.get_name() == str(event.from_user.id):
-                    task.cancel()
-        except CancelledError:
-            pass
+        await kill_task(event.from_user.id)
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=False)
+        await ActiveUsers.filter(user_id=event.from_user.id).update(not_notification=False)
         await loop_notifications_8hrs(user_id=event.from_user.id, manager=manager)
     if item_id == '1':
-        try:
-            for task in asyncio.all_tasks():
-                if task.get_name() == str(event.from_user.id):
-                    task.cancel()
-        except CancelledError:
-            pass
+        await kill_task(event.from_user.id)
         await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=True)
         await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=False)
+        await ActiveUsers.filter(user_id=event.from_user.id).update(not_notification=False)
         await loop_notifications_instant(user_id=event.from_user.id, manager=manager)
+    if item_id == '2':
+        await kill_task(event.from_user.id)
+        await ActiveUsers.filter(user_id=event.from_user.id).update(instant_notification=False)
+        await ActiveUsers.filter(user_id=event.from_user.id).update(eight_hour_notification=False)
+        await ActiveUsers.filter(user_id=event.from_user.id).update(not_notification=True)
 
 
 async def kill_bot(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -88,7 +92,8 @@ settings_dialog = Dialog(
                 item_id_getter=operator.itemgetter(1),
                 items=[
                     ("Несколько раз в сутки", 0),
-                    ("Обо всех задачах и сообщениях", 1)
+                    ("Обо всех задачах и сообщениях", 1),
+                    ("Отключить", 2)
                 ],
                 on_state_changed=state_changed,
             )
@@ -100,7 +105,7 @@ settings_dialog = Dialog(
     Window(
         Const("Отключить бота?"),
         Row(
-            Button(Const("Да ✅"), on_click=kill_bot, id="del" ),
+            Button(Const("Да ✅"), on_click=kill_bot, id="del"),
             SwitchTo(Const("Нет ❌"), id="backk", state=SettingsSG.choose_action), ),
 
         getter=get_data,
