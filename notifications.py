@@ -341,7 +341,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                           org_id=organization)
         tasks_amount = len(tasks_dict)
 
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -372,6 +372,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                 await manager.bg().done()
                 await asyncio.sleep(1)
                 await manager.bg().start(MessagesSG.choose_action)
+                await asyncio.sleep(1)
         except KeyError:
             pass
 
@@ -394,6 +395,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
             await manager.bg().done()
             await asyncio.sleep(1)
             await manager.bg().start(TasksSG.choose_action)
+            await asyncio.sleep(1)
 
 
 async def loop_notifications_8hrs(user_id, manager):
