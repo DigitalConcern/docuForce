@@ -115,8 +115,12 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     ctr = 0
     for task in tasks:
         try:
-            cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
-                task["document"]["fields"]["currency"]) + "\n "
+            if (task["document"]["fields"]["sumTotal"] is not None) and (
+                    task["document"]["fields"]["currency"] is not None):
+                cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                    task["document"]["fields"]["currency"]) + "\n "
+            else:
+                cost = ""
         except:
             cost = ""
         try:
@@ -129,11 +133,15 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         except:
             data = ""
         try:
-            doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
+            if task["document"]["fields"]["documentNumber"] is not None:
+                doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
+                if data == "":
+                    doc_index += "\n"
+            else:
+                doc_index = ""
         except:
             doc_index = ""
+        other_fields = ""
         try:
             doc_key = str(task["document"]["type"])
             meta_url = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
@@ -146,7 +154,6 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                     doc_name = meta_response.json()["title"]
                 except:
                     doc_name = meta_response.json()["titles"]["en"]
-            other_fields = ""
             try:
                 for field in meta_response.json()["fields"]:
                     if field["formProperties"]["form"]["visible"] and (
@@ -163,13 +170,18 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                 pass
         except:
             doc_name = ""
-        stage = "\n" + f"Статус: <b>Завершено</b>\n"
+        stage = "\n" + f"<b>Завершено</b>\n"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == task["document"]['flowStageType']:
-                    stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
+                    if task["stage"]["type"] == "SIGNING":
+                        stage = "✍🏻"
+                    else:
+                        stage = "👌🏻"
+                    stage += f"<b>{stage_type['name']}</b>\n"
             except KeyError:
-                stage = ""
+                pass
+
         try:
             button = await get_task_button(doc_task_type=task["document"]['flowStageType'], org_id=org_id,
                                            access_token=access_token, refresh_token=refresh_token, user_id=user_id)
@@ -187,6 +199,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                             task["task"]["type"],
                             task["task"]["oguid"],
                             task["document"]["documentAttachmentOguid"],
+
                             )  # Найти какие данные нужно вытащить из тасков
         ctr += 1
     return result
@@ -396,7 +409,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
 
     if contained_string == "":
-        params = {}
+        params = {'perPage': 100}
     else:
         params = {"query.like": contained_string,
                   'perPage': 100, }
@@ -419,8 +432,11 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     response_types_list = response_types.json()
     for resp in resp_list:
         try:
-            cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
-                resp["fields"]["currency"]) + "\n"
+            if (resp["fields"]["sumTotal"] is not None) and (resp["fields"]["currency"] is not None):
+                cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
+                    resp["fields"]["currency"]) + "\n"
+            else:
+                cost = ""
         except KeyError:
             cost = ""
         try:
@@ -433,9 +449,12 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         except:  # Если его нет то он не разделится на 1е3
             data = ""
         try:
-            doc_index = "№" + str(resp["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
+            if resp["fields"]["documentNumber"] is not None:
+                doc_index = "№" + str(resp["fields"]["documentNumber"])
+                if data == "":
+                    doc_index += "\n"
+            else:
+                doc_index = ""
         except KeyError:
             doc_index = ""
         try:
@@ -486,116 +505,6 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     return result
 
 
-# async def get_conversations_dict_old(access_token, refresh_token, org_id, user_id):
-#     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-#     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
-#
-#     params = {'showMode': "TODOS_ONLY",
-#               'isCompleted': "false"}
-#
-#     async with httpx.AsyncClient() as requests:
-#         response = await requests.get(url=url, headers=headers, params=params)
-#     while response.status_code != 200:
-#         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
-#         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-#         async with httpx.AsyncClient() as requests:
-#             response = await requests.get(url=url, headers=headers, params=params)
-#
-#     types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
-#     types_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes"
-#     async with httpx.AsyncClient() as requests:
-#         response_types = await requests.get(url=types_url, headers=types_headers, params=params)
-#
-#     response_types_list = response_types.json()
-#     conversations = response.json()
-#
-#     result = {}
-#     messages = defaultdict(list)
-#     for conversation in conversations:
-#         try:
-#             cost = "Сумма: " + str(conversation["document"]["fields"]["sumTotal"]) + " " + str(
-#                 conversation["document"]["fields"]["currency"])
-#         except KeyError:
-#             cost = ""
-#         try:
-#             org__name = conversation["document"]["fields"]["contractor"] + "\n"
-#         except KeyError:
-#             org__name = ""
-#         try:
-#             data = " От " + datetime.datetime.fromtimestamp(
-#                 conversation["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
-#         except KeyError:
-#             data = ""
-#         try:
-#             doc_index = "№" + str(conversation["document"]["fields"]["documentNumber"])
-#             if data == "":
-#                 doc_index += "\n"
-#         except KeyError:
-#             doc_index = ""
-#         try:
-#             doc_key = str(conversation["document"]["type"])
-#             metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
-#             async with httpx.AsyncClient() as requests:
-#                 meta_response = await requests.get(url=metaurl, headers=headers)
-#             try:
-#                 doc_name = meta_response.json()["titles"]["ru"] + " "
-#             except KeyError:
-#                 try:
-#                     doc_name = meta_response.json()["title"] + " "
-#                 except KeyError:
-#                     doc_name = meta_response.json()["titles"]["en"] + " "
-#             other_fields = ""
-#             try:
-#                 for field in meta_response.json()["fields"]:
-#                     if field["formProperties"]["form"]["visible"] and (
-#                             field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-#                                                  "documentNumber"]):
-#                         try:
-#                             other_fields += field["component"]["label"] + ": " + str(
-#                                 conversation["document"]["fields"][field["key"]])
-#                         except KeyError:
-#                             other_fields += field["component"]["labels"]["ru"] + ": " + str(
-#                                 conversation["document"]["fields"][field["key"]]) + "\n"
-#                         print(other_fields)
-#             except KeyError:
-#                 pass
-#         except KeyError:
-#             doc_name = ""
-#
-#         stage = "\n" + f"Статус: <b>Завершено</b>\n"
-#         for stage_type in response_types_list:
-#             try:
-#                 if stage_type["type"] == conversation["document"]['flowStageType']:
-#                     stage = "\n" + f"Статус: <b>{stage_type['name']}</b>\n"
-#             except KeyError:
-#                 stage = ""
-#         try:
-#             comment = "\n\n" + conversation["task"]["description"]
-#         except KeyError:
-#             comment = ""
-#
-#         try:
-#             author = "\n" + "От кого: " + conversation["task"]["author"]["name"] + " " + conversation["task"]["author"][
-#                 "surname"]
-#         except KeyError:
-#             author = ""
-#         messages[conversation["document"]["oguid"]].append(comment + author)
-#
-#         result[conversation["document"]["oguid"]] = (cost,
-#                                                      org__name,
-#                                                      data,
-#                                                      doc_index,
-#                                                      doc_name,
-#                                                      other_fields,
-#                                                      messages[conversation["document"]["oguid"]],
-#                                                      stage,
-#                                                      conversation["task"]["oguid"],
-#                                                      conversation["task"]["author"]["oguid"],
-#                                                      len(messages[conversation["document"]["oguid"]])
-#                                                      )  # Найти какие данные нужно вытащить из тасков
-#     return result
-
-
 async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
@@ -625,8 +534,11 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
     ctr = 0
     for task in tasks:
         try:
-            cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
-                task["document"]["fields"]["currency"])
+            if task["document"]["fields"]["sumTotal"] is not None:
+                cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                    task["document"]["fields"]["currency"])
+            else:
+                cost = ""
         except:
             cost = ""
         try:
@@ -634,7 +546,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             org__name = ""
         try:
-            data = " От " + datetime.datetime.fromtimestamp(
+            data = " от " + datetime.datetime.fromtimestamp(
                 task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
         except:
             data = ""
@@ -687,10 +599,11 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
             comment = ""
 
         try:
-            author = "\n" + "От кого: " + task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
+            author = "\n" + task["task"]["author"]["surname"] + " " + task["task"]["author"]["name"][0] + '.' + \
+                     task["task"]["author"]["patronymic"][0]
         except KeyError:
             author = ""
-        message = (comment + author)
+        message = comment
         author_for_resp = task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
 
         result[f"{ctr}"] = (cost,
@@ -704,7 +617,8 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                             task["task"]["oguid"],
                             task["task"]["author"]["oguid"],
                             task["document"]["oguid"],
-                            author_for_resp
+                            author_for_resp,
+                            author
                             )
 
         ctr += 1

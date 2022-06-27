@@ -46,7 +46,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     task_ids = []
     doc_att_ids = []
     for task in tasks_dict.keys():
-        micro_text = f"{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}{tasks_dict[task][7]}"
+        micro_text = f"{tasks_dict[task][7]}\n{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
         yes_names.append(tasks_dict[task][8])
@@ -71,7 +71,8 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'is_not_first': False,
             'is_not_last': False,
             'is_not_one': False,
-            'have_tasks': False
+            'have_tasks': False,
+            "no_acq": True,
         }
     else:
         if dialog_manager.current_context().dialog_data["len"] <= 1:
@@ -100,6 +101,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             dialog_manager.current_context().dialog_data["counter"]]
         current_page = text[dialog_manager.current_context().dialog_data["counter"]]
         dialog_manager.current_context().dialog_data["current_page"] = current_page
+        no_acq = (task_types[dialog_manager.current_context().dialog_data["counter"]] != "ACQUAINTANCE")
         return {
             'current_page': dialog_manager.current_context().dialog_data.get("current_page", current_page),
             'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
@@ -109,6 +111,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
             'len': dialog_manager.current_context().dialog_data.get("len", 0),
             'is_not_one': dialog_manager.current_context().dialog_data.get("is_not_one", True),
             'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),
+            "no_acq": no_acq,
         }
 
 
@@ -120,8 +123,8 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == \
+                    dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
             if dialog_manager.current_context().dialog_data["counter"] > 0:
@@ -133,8 +136,8 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                     dialog_manager.current_context().dialog_data["counter"]]
             if dialog_manager.current_context().dialog_data["counter"] == 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = False
-            if dialog_manager.current_context().dialog_data["counter"] < len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data[
+                "len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
         case "first":
             dialog_manager.current_context().dialog_data["counter"] = 0
@@ -226,9 +229,10 @@ tasks_dialog = Dialog(
                    ),
             Button(Format("Отказать ❌"),
                    id="no",
-                   on_click=do_task
+                   on_click=do_task,
+                   when="no_acq"
                    ),
-
+            when="have_tasks"
         ),
         Button(
             Format("Просмотр документа 📄"),

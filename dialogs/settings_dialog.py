@@ -16,12 +16,13 @@ from aiogram_dialog.widgets.text import Const, Format
 from bot import MyBot
 from .org_dialog import OrgSG
 from database import ActiveUsers
-from notifications import loop_notifications_8hrs, loop_notifications_instant
+from notifications import loop_notifications_8hrs, loop_notifications_instant, kill_task
 
 
 class SettingsSG(StatesGroup):
     choose_action = State()
     notifics = State()
+    kill = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -32,10 +33,12 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     # await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1"):
-        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification", flat=True))[0]:
+        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification",
+                                                                                            flat=True))[0]:
             await radio.set_checked(item_id="0", event=dialog_manager.event)
 
-        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("instant_notification", flat=True))[0]:
+        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("instant_notification",
+                                                                                            flat=True))[0]:
             await radio.set_checked(item_id="1", event=dialog_manager.event)
 
 
@@ -62,17 +65,19 @@ async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, 
         await loop_notifications_instant(user_id=event.from_user.id, manager=manager)
 
 
+async def kill_bot(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await kill_task(c.from_user.id)
+    await ActiveUsers.filter(user_id=c.from_user.id).delete()
+    await dialog_manager.done()
+
+
 settings_dialog = Dialog(
-    Window(
-        StaticMedia(
-            path="resources/sett2.png",
-            type=ContentType.PHOTO
-        ),
-        Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
-        SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
-        # Cancel(Const("⏪ Назад")),
-        state=SettingsSG.choose_action
-    ),
+    Window(Const("Настройки"),
+           Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
+           SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
+           SwitchTo(Const("Выход"), id="killer", state=SettingsSG.kill),
+           state=SettingsSG.choose_action
+           ),
     Window(
         Const("Выберите удобный для Вас режим уведомлений 🔔"),
         Column(
@@ -91,6 +96,15 @@ settings_dialog = Dialog(
         Back(Const("⏪ Назад")),
         getter=get_data,
         state=SettingsSG.notifics
+    ),
+    Window(
+        Const("Отключить бота?"),
+        Row(
+            Button(Const("Да ✅"), on_click=kill_bot, id="del" ),
+            SwitchTo(Const("Нет ❌"), id="backk", state=SettingsSG.choose_action), ),
+
+        getter=get_data,
+        state=SettingsSG.kill
     ),
 
     launch_mode=LaunchMode.SINGLE_TOP

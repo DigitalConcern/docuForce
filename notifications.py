@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import CancelledError
 from collections import defaultdict
 
 from aiogram.types import ParseMode
@@ -110,7 +111,8 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
     counter = 0
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+            0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
 
         conversations = await get_conversations_dict(user_id=user_id,
@@ -172,7 +174,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                             #              f'<i>{"".join(reversed(msg_arr))}</i>' \
                             #              f"{new_conversations[conv_key][7]}"
                             # await MyBot.bot.send_message(user_id, text=micro_text, parse_mode=ParseMode.HTML)
-                            await manager.done()
+                            await manager.bg().done()
                             await asyncio.sleep(1)
                             await manager.bg().start(MessagesSG.choose_action)
                         else:
@@ -202,7 +204,9 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
                 #     text_not_task += f"{new_tasks_dict[i][1]}{new_tasks_dict[i][5]} {new_tasks_dict[i][4]}{new_tasks_dict[i][2]}{new_tasks_dict[i][0]}{new_tasks_dict[i][6]}{new_tasks_dict[i][7]}\n\n"
                 #
                 # await MyBot.bot.send_message(user_id, text_not_task, parse_mode=ParseMode.HTML)
-                await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+                await manager.bg().done()
+                await asyncio.sleep(1)
+                await manager.bg().start(TasksSG.choose_action)
             else:
                 await MyBot.bot.send_message(user_id, f"Новых сообщений нет!")
             counter = 0
@@ -322,7 +326,8 @@ async def old_msg_instant(user_id: int, manager: DialogManager):
 async def msg_instant(user_id: int, manager: DialogManager):
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+            0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
 
         conversations = await get_conversations_dict(user_id=user_id,
@@ -339,7 +344,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                           org_id=organization)
         tasks_amount = len(tasks_dict)
 
-        await asyncio.sleep(20)
+        await asyncio.sleep(30)
 
         new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                               refresh_token=refresh_token,
@@ -367,7 +372,10 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
-                await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+                await manager.bg().done()
+                await asyncio.sleep(1)
+                await manager.bg().start(MessagesSG.choose_action)
+                await asyncio.sleep(1)
         except KeyError:
             pass
 
@@ -387,7 +395,10 @@ async def msg_instant(user_id: int, manager: DialogManager):
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
-            await manager.bg().start(TasksSG.choose_action, mode=StartMode.RESET_STACK)
+            await manager.bg().done()
+            await asyncio.sleep(1)
+            await manager.bg().start(TasksSG.choose_action)
+            await asyncio.sleep(1)
 
 
 async def loop_notifications_8hrs(user_id, manager):
@@ -398,3 +409,28 @@ async def loop_notifications_8hrs(user_id, manager):
 async def loop_notifications_instant(user_id, manager):
     loop = asyncio.get_event_loop()
     loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
+
+
+async def kill_task(user_id: int):
+    try:
+        for task in asyncio.all_tasks():
+            if task.get_name() == str(user_id):
+                task.cancel()
+    except CancelledError:
+        pass
+
+
+async def start_notifications(user_id: int, manager: DialogManager):
+    eight_hour_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
+    instant_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
+    if not eight_hour_notification and not instant_notification:
+        await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+    elif eight_hour_notification:
+        await kill_task(user_id)
+        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
+    elif instant_notification:
+        await kill_task(user_id)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())

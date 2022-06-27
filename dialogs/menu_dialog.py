@@ -9,7 +9,7 @@ from aiogram_dialog import DialogManager, StartMode
 from bot import MyBot
 from client import get_access
 from database import ActiveUsers, Stats
-from notifications import loop_notifications_8hrs, loop_notifications_instant
+from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications
 from .auth_dialog import AuthSG
 from .messages_dialog import MessagesSG
 from .tasks_dialog import TasksSG
@@ -21,30 +21,7 @@ class MenuSG(StatesGroup):
     choose_action = State()
 
 
-async def start_notifications(user_id: int, manager: DialogManager):
-    eight_hour_notification = \
-        (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
-    instant_notification = \
-        (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
-    if not eight_hour_notification and not instant_notification:
-        await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
-        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
-    elif eight_hour_notification:
-        try:
-            for task in asyncio.all_tasks():
-                if task.get_name() == str(user_id):
-                    task.cancel()
-        except CancelledError:
-            pass
-        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
-    elif instant_notification:
-        try:
-            for task in asyncio.all_tasks():
-                if task.get_name() == str(user_id):
-                    task.cancel()
-        except CancelledError:
-            pass
-        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+
 
 
 async def tasks(m: Message, dialog_manager: DialogManager):
@@ -87,7 +64,7 @@ async def document_list(m: Message, dialog_manager: DialogManager):
             user_id=m.from_user.id)
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
-        command_documents = (await Stats.filter(id=0).values_list("command_tasks", flat=True))[0]
+        command_documents = (await Stats.filter(id=0).values_list("command_documents", flat=True))[0]
         await Stats.filter(id=0).update(command_documents=command_documents + 1)
 
         await dialog_manager.start(ListDocSG.choose_action, mode=StartMode.RESET_STACK)
@@ -115,7 +92,7 @@ async def messages(m: Message, dialog_manager: DialogManager):
 
         command_messages = (
             await Stats.filter(id=0).values_list("command_messages", flat=True))[0]
-        await Stats.filter(id=0).update(command_search=command_messages + 1)
+        await Stats.filter(id=0).update(command_messages=command_messages + 1)
 
         await dialog_manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
 
