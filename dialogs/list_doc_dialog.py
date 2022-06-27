@@ -162,6 +162,7 @@ list_doc_dialog = Dialog(
         DynamicMedia(
             url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{current_doc_id}/page/1",
             url_headers="{access_token}",
+            when='have_documents',
             type=ContentType.PHOTO
         ),
         Format('{current_doc}'),

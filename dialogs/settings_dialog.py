@@ -72,12 +72,12 @@ async def kill_bot(c: CallbackQuery, button: Button, dialog_manager: DialogManag
 
 
 settings_dialog = Dialog(
-    Window(
-        Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
-        SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
-        SwitchTo(Const("Выход"), id="killer", state=SettingsSG.kill),
-        state=SettingsSG.choose_action
-    ),
+    Window(Const("Настройки"),
+           Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
+           SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
+           SwitchTo(Const("Выход"), id="killer", state=SettingsSG.kill),
+           state=SettingsSG.choose_action
+           ),
     Window(
         Const("Выберите удобный для Вас режим уведомлений 🔔"),
         Column(
@@ -99,10 +99,9 @@ settings_dialog = Dialog(
     ),
     Window(
         Const("Отключить бота?"),
-        Row(Button(
-            Const("Да ✅"), on_click=kill_bot, id="del"
-        ),
-            Back(Const("Нет ❌")), ),
+        Row(
+            Button(Const("Да ✅"), on_click=kill_bot, id="del" ),
+            SwitchTo(Const("Нет ❌"), id="backk", state=SettingsSG.choose_action), ),
 
         getter=get_data,
         state=SettingsSG.kill
