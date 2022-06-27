@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import CancelledError
 from collections import defaultdict
 
 from aiogram.types import ParseMode
@@ -110,7 +111,8 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
     counter = 0
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+            0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
 
         conversations = await get_conversations_dict(user_id=user_id,
@@ -324,7 +326,8 @@ async def old_msg_instant(user_id: int, manager: DialogManager):
 async def msg_instant(user_id: int, manager: DialogManager):
     messages_in_conv = defaultdict(int)
     while True:
-        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[0]
+        data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+            0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
 
         conversations = await get_conversations_dict(user_id=user_id,
@@ -406,3 +409,28 @@ async def loop_notifications_8hrs(user_id, manager):
 async def loop_notifications_instant(user_id, manager):
     loop = asyncio.get_event_loop()
     loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
+
+
+async def kill_task(user_id: int):
+    try:
+        for task in asyncio.all_tasks():
+            if task.get_name() == str(user_id):
+                task.cancel()
+    except CancelledError:
+        pass
+
+
+async def start_notifications(user_id: int, manager: DialogManager):
+    eight_hour_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
+    instant_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
+    if not eight_hour_notification and not instant_notification:
+        await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+    elif eight_hour_notification:
+        await kill_task(user_id)
+        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
+    elif instant_notification:
+        await kill_task(user_id)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())

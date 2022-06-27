@@ -54,14 +54,14 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     user_ids = []
     authors_for_resp = []
     for conversation in conversations_dict.keys():
-        micro_text = f"{conversations_dict[conversation][1]}" \
-                     f"{conversations_dict[conversation][4]}" \
+        micro_text = f"<i>{conversations_dict[conversation][12]}</i>" \
+                     f"<b>{conversations_dict[conversation][6]}</b>\n\n" \
+                     f"По документу:\n" \
+                     f"<i>{conversations_dict[conversation][4]}" \
                      f"{conversations_dict[conversation][3]}" \
                      f"{conversations_dict[conversation][2]}" \
                      f"{conversations_dict[conversation][0]}" \
-                     f"{conversations_dict[conversation][5]}" \
-                     f'\n<i>{conversations_dict[conversation][6]}</i>' \
-                     f"\n{conversations_dict[conversation][7]}"
+                     f"{conversations_dict[conversation][5]}</i>"
         text.append(micro_text)
         authors_for_resp.append(conversations_dict[conversation][11])
         doc_ids.append(conversations_dict[conversation][10])

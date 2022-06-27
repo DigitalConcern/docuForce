@@ -649,7 +649,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             org__name = ""
         try:
-            data = " От " + datetime.datetime.fromtimestamp(
+            data = " от " + datetime.datetime.fromtimestamp(
                 task["document"]["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
         except:
             data = ""
@@ -702,10 +702,10 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
             comment = ""
 
         try:
-            author = "\n" + "От кого: " + task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
+            author = "\n" + task["task"]["author"]["surname"] + " " + task["task"]["author"]["name"][0]+'.'+task["task"]["author"]["patronymic"][0]
         except KeyError:
             author = ""
-        message = (comment + author)
+        message = comment
         author_for_resp = task["task"]["author"]["name"] + " " + task["task"]["author"]["surname"]
 
         result[f"{ctr}"] = (cost,
@@ -719,7 +719,8 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
                             task["task"]["oguid"],
                             task["task"]["author"]["oguid"],
                             task["document"]["oguid"],
-                            author_for_resp
+                            author_for_resp,
+                            author
                             )
 
         ctr += 1
