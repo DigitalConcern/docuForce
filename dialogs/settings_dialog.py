@@ -75,7 +75,7 @@ settings_dialog = Dialog(
     Window(
         Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
         SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
-        SwitchTo(Const("Уведомления 🔔"), id="killer", state=SettingsSG.kill),
+        SwitchTo(Const("Выход"), id="killer", state=SettingsSG.kill),
         state=SettingsSG.choose_action
     ),
     Window(
