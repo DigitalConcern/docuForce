@@ -115,8 +115,11 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     ctr = 0
     for task in tasks:
         try:
-            cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
-                task["document"]["fields"]["currency"]) + "\n "
+            if (task["document"]["fields"]["sumTotal"] is not None) and (task["document"]["fields"]["currency"] is not None):
+                cost = "Сумма: " + str(task["document"]["fields"]["sumTotal"]) + " " + str(
+                    task["document"]["fields"]["currency"]) + "\n "
+            else:
+                cost=""
         except:
             cost = ""
         try:
@@ -129,11 +132,15 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         except:
             data = ""
         try:
-            doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
+            if task["document"]["fields"]["documentNumber"] is not None:
+                doc_index = "№" + str(task["document"]["fields"]["documentNumber"])
+                if data == "":
+                    doc_index += "\n"
+            else:
+                doc_index=""
         except:
             doc_index = ""
+        other_fields = ""
         try:
             doc_key = str(task["document"]["type"])
             meta_url = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
@@ -146,7 +153,6 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                     doc_name = meta_response.json()["title"]
                 except:
                     doc_name = meta_response.json()["titles"]["en"]
-            other_fields = ""
             try:
                 for field in meta_response.json()["fields"]:
                     if field["formProperties"]["form"]["visible"] and (
@@ -396,7 +402,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
 
     if contained_string == "":
-        params = {}
+        params = {'perPage': 100}
     else:
         params = {"query.like": contained_string,
                   'perPage': 100, }
@@ -419,7 +425,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     response_types_list = response_types.json()
     for resp in resp_list:
         try:
-            if resp["fields"]["sumTotal"] is not None:
+            if (resp["fields"]["sumTotal"] is not None) and (resp["fields"]["currency"] is not None):
                 cost = "Сумма: " + str(resp["fields"]["sumTotal"]) + " " + str(
                     resp["fields"]["currency"]) + "\n"
             else:
@@ -436,9 +442,12 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         except:  # Если его нет то он не разделится на 1е3
             data = ""
         try:
-            doc_index = "№" + str(resp["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
+            if resp["fields"]["documentNumber"] is not None:
+                doc_index = "№" + str(resp["fields"]["documentNumber"])
+                if data == "":
+                    doc_index += "\n"
+            else:
+                doc_index=""
         except KeyError:
             doc_index = ""
         try:

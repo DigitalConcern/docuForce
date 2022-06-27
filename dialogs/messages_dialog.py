@@ -125,31 +125,30 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
             if dialog_manager.current_context().dialog_data["counter"] > 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = True
         case "minus":
             dialog_manager.current_context().dialog_data["counter"] -= 1
-            dialog_manager.current_context().dialog_data["current_page"] = \
-                dialog_manager.current_context().dialog_data["text"][
-                    dialog_manager.current_context().dialog_data["counter"]]
+            dialog_manager.current_context().dialog_data["current_page"] = dialog_manager.current_context().dialog_data["text"][dialog_manager.current_context().dialog_data["counter"]]
             if dialog_manager.current_context().dialog_data["counter"] == 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = False
-            if dialog_manager.current_context().dialog_data["counter"] < len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
         case "first":
             dialog_manager.current_context().dialog_data["counter"] = 0
             dialog_manager.current_context().dialog_data["is_not_last"] = True
             dialog_manager.current_context().dialog_data["is_not_first"] = False
+            dialog_manager.current_context().dialog_data["current_page"] = dialog_manager.current_context().dialog_data["text"][dialog_manager.current_context().dialog_data["counter"]]
         case "fin":
             dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
                                                                           "len"] - 1
             dialog_manager.current_context().dialog_data["is_not_last"] = False
             dialog_manager.current_context().dialog_data["is_not_first"] = True
+    dialog_manager.current_context().dialog_data["current_page"] = dialog_manager.current_context().dialog_data["text"][
+        dialog_manager.current_context().dialog_data["counter"]]
 
 
 async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManager):
@@ -219,8 +218,8 @@ async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogMana
         current_document_id=dialog_manager.current_context().dialog_data["current_doc"])
     dialog_manager.current_context().dialog_data["conversations_dict"] = ""
 
-    documents = (await ActiveUsers.filter(id=0).values_list("documents", flat=True))[0]
-    await ActiveUsers.filter(id=0).update(documents=documents + 1)
+    documents = (await Stats.filter(id=0).values_list("documents", flat=True))[0]
+    await Stats.filter(id=0).update(documents=documents + 1)
 
     await dialog_manager.start(ViewDocSG.choose_action)
 
@@ -236,7 +235,7 @@ messages_dialog = Dialog(
                      ),
             Button(Format("Закрыть ❌"),
                    when="have_tasks",
-                   id="doc",
+                   id="close",
                    on_click=close_msg),
         ),
         Button(

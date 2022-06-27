@@ -120,8 +120,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == dialog_manager.current_context().dialog_data["len"] :
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
             if dialog_manager.current_context().dialog_data["counter"] > 0:
@@ -133,8 +132,7 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                     dialog_manager.current_context().dialog_data["counter"]]
             if dialog_manager.current_context().dialog_data["counter"] == 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = False
-            if dialog_manager.current_context().dialog_data["counter"] < len(
-                    dialog_manager.current_context().dialog_data["text"]):
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data["len"] :
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
         case "first":
             dialog_manager.current_context().dialog_data["counter"] = 0
