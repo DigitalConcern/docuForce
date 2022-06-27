@@ -169,8 +169,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-    msg_text = dialog_manager.current_context().dialog_data["current_page"].rpartition('Статус:')[0]
-    msg_text += f"Результат:\n"
+    msg_text = "<b>"
     match button.widget_id:
         case "yes":
             data = "SOLVED"
@@ -181,20 +180,27 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                       task_id=dialog_manager.current_context().dialog_data["task_id"],
                                       action=data,
                                       user_id=c.from_user.id)
+                msg_text += "🆗"
             else:
                 await post_doc_sign(access_token=access_token,
                                     refresh_token=refresh_token,
                                     org_id=organization,
                                     user_oguid=dialog_manager.current_context().dialog_data["user_org_id"],
-                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],  # Блин треш
+                                    att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
                                     doc_id=dialog_manager.current_context().dialog_data["current_doc_id"],
                                     user_id=dialog_manager.event.from_user.id)
-            msg_text += "Документ "
-            msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
-                                               user_id=dialog_manager.event.from_user.id,
-                                               doc_task_type=dialog_manager.current_context().dialog_data[
-                                                   'task_type_service'], org_id=organization, is_done=True)
+                msg_text += "🖋Документ "
+
+            msg_mini_text = (await get_task_caption(access_token=access_token, refresh_token=refresh_token,
+                                                    user_id=dialog_manager.event.from_user.id,
+                                                    doc_task_type=dialog_manager.current_context().dialog_data[
+                                                        'task_type_service'], org_id=organization, is_done=True))
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
+                msg_text += msg_mini_text
+            else:
+                msg_text += msg_mini_text.lower()
         case "no":
+            msg_text += "🚫"
             data = "DECLINED"
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
@@ -203,7 +209,11 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                user_id=dialog_manager.event.from_user.id,
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=False)
-    await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
+    msg_text += "</b>"
+    msg_text += f"\n\n"
+    msg_text += "<i>" + dialog_manager.current_context().dialog_data["current_page"].partition('<i>')[2]
+
+    await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text, parse_mode=ParseMode.HTML)
 
     tasks_done = (await Stats.filter(id=0).values_list("tasks_done", flat=True))[0]
     await Stats.filter(id=0).update(tasks_done=tasks_done + 1)

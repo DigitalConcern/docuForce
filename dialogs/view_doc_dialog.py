@@ -57,6 +57,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         "yes_name", "Да")
     dialog_manager.current_context().dialog_data["task_id"] = dialog_manager.current_context().dialog_data.get(
         "task_id", "")
+    dialog_manager.current_context().dialog_data["text"] = doc["text"]
     if doc["task_id"] != "":
         dialog_manager.current_context().dialog_data["is_task"] = True
         dialog_manager.current_context().dialog_data["yes_name"] = doc["task_type"]
@@ -115,7 +116,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
 
-    msg_text = f"Результат:\n"
+    msg_text = ""
     match button.widget_id:
         case "yes":
             data = "SOLVED"
@@ -126,6 +127,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                       task_id=dialog_manager.current_context().dialog_data["task_id"],
                                       action=data,
                                       user_id=c.from_user.id)
+                msg_text += "🆗"
             else:
                 await post_doc_sign(access_token=access_token,
                                     refresh_token=refresh_token,
@@ -134,13 +136,14 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                     att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
                                     doc_id=dialog_manager.current_context().dialog_data["current_document_id"],
                                     user_id=dialog_manager.event.from_user.id)
-            msg_text+="Документ "
+                msg_text += "🖋Документ "
             msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
                                                user_id=dialog_manager.event.from_user.id,
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=True)
         case "no":
             data = "DECLINED"
+            msg_text += "🚫"
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
@@ -148,7 +151,8 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                user_id=dialog_manager.event.from_user.id,
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=False)
-    await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text)
+    msg_text += "\n<i>" + dialog_manager.current_context().dialog_data["text"] + "</i>"
+    await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text,parse_mode=ParseMode.HTML)
 
     command_tasks = (await Stats.filter(id=0).values_list("command_tasks", flat=True))[0]
     await Stats.filter(id=0).update(command_tasks=command_tasks + 1)

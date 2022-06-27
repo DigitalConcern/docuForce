@@ -170,7 +170,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                 pass
         except:
             doc_name = ""
-        stage =f"<b>Завершено</b>\n"
+        stage = f"<b>Завершено</b>\n"
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == task["document"]['flowStageType']:
@@ -244,7 +244,6 @@ async def get_task_caption(access_token, refresh_token, user_id, doc_task_type, 
     return doc_task_name
 
 
-
 async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, page):
     headers = {"Access-Token": f"{access_token}"}
 
@@ -278,11 +277,70 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
 
     task_name = await get_task_button(access_token=access_token, refresh_token=refresh_token, user_id=user_id,
                                       doc_task_type=doc_task_type, org_id=org_id)
+    try:
+        if (doc_response_json["fields"]["sumTotal"] is not None) and (doc_response_json["fields"]["currency"] is not None):
+            cost = "Сумма: " + str(doc_response_json["fields"]["sumTotal"]) + " " + str(
+                doc_response_json["fields"]["currency"]) + "\n"
+        else:
+            cost = ""
+    except :
+        cost = ""
+    try:
+        org__name = doc_response_json["fields"]["contractor"] + "\n"
+    except :
+        org__name = ""
+    try:
+        data = " от " + datetime.datetime.fromtimestamp(
+            doc_response_json["fields"]["documentDate"] / 1e3).strftime("%d.%m.%Y") + "\n"
+    except:  # Если его нет то он не разделится на 1е3
+        data = ""
+    try:
+        if doc_response_json["fields"]["documentNumber"] is not None:
+            doc_index = "№" + str(doc_response_json["fields"]["documentNumber"])
+            if data == "":
+                doc_index += "\n"
+        else:
+            doc_index = ""
+    except :
+        doc_index = ""
+    doc_name = ""
+    other_fields = ""
+    try:
+        doc_key = str(doc_response_json["type"])
+        metaurl = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documentTypes/{doc_key}'
+        async with httpx.AsyncClient() as requests:
+            meta_response = await requests.get(url=metaurl, headers=headers)
+        try:
+            doc_name = meta_response.json()["titles"]["ru"]
+        except :
+            try:
+                doc_name = meta_response.json()["title"]
+            except :
+                doc_name = meta_response.json()["titles"]["en"]
+
+        try:
+            for field in meta_response.json()["fields"]:
+                if field["formProperties"]["form"]["visible"] and (
+                        field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+                                             "documentNumber"]):
+                    try:
+                        other_fields += field["component"]["label"] + ": " + str(
+                            doc_response_json["fields"][field["key"]])
+                    except :
+                        other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                            doc_response_json["fields"][field["key"]]) + "\n"
+                    print(other_fields)
+        except :
+            pass
+    except :
+        pass
+    text = f"{doc_name} {doc_index}{data}{org__name}{cost}{other_fields}"
     return {"len": len,
             "task_id": doc_task_id,
             "task_type": task_name,
             "task_type_service": doc_task_type,
-            "doc_att_id": doc_att_id}
+            "doc_att_id": doc_att_id,
+            "text": text}
 
 
 async def post_doc_action(access_token, refresh_token, org_id, task_id, action, user_id):
