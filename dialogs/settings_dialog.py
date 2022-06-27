@@ -65,22 +65,17 @@ async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, 
         await loop_notifications_instant(user_id=event.from_user.id, manager=manager)
 
 
-async def kill(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
+async def kill_bot(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await kill_task(c.from_user.id)
     await ActiveUsers.filter(user_id=c.from_user.id).delete()
     await dialog_manager.done()
 
 
-
 settings_dialog = Dialog(
     Window(
-        StaticMedia(
-            path="resources/sett2.png",
-            type=ContentType.PHOTO
-        ),
         Start(Const("Сменить организацию 🔄"), id="choose_action", state=OrgSG.choose_org),
         SwitchTo(Const("Уведомления 🔔"), id="notifics", state=SettingsSG.notifics),
-        # Cancel(Const("⏪ Назад")),
+        SwitchTo(Const("Уведомления 🔔"), id="killer", state=SettingsSG.kill),
         state=SettingsSG.choose_action
     ),
     Window(
@@ -104,11 +99,10 @@ settings_dialog = Dialog(
     ),
     Window(
         Const("Отключить бота?"),
-        Row(Button(Format("Да ✅"),
-                   on_click=kill_bot,
-                   id="curr"),
-            Back(Const("Нет ❌")),
-            ),
+        Row(Button(
+            Const("Да ✅"), on_click=kill_bot, id="del"
+        ),
+            Back(Const("Нет ❌")), ),
 
         getter=get_data,
         state=SettingsSG.kill
