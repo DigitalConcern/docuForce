@@ -21,9 +21,6 @@ class MenuSG(StatesGroup):
     choose_action = State()
 
 
-
-
-
 async def tasks(m: Message, dialog_manager: DialogManager):
     if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")

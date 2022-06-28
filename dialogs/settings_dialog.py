@@ -112,5 +112,5 @@ settings_dialog = Dialog(
         state=SettingsSG.kill
     ),
 
-    launch_mode=LaunchMode.SINGLE_TOP
+    launch_mode=LaunchMode.ROOT
 )

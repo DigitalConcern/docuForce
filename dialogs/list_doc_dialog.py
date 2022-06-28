@@ -198,7 +198,7 @@ list_doc_dialog = Dialog(
                    on_click=switch_pages),
         ),
 
-        # Cancel(Const("⏪ Назад")),
+        # Cancel(Const("Закрыть")),
         state=ListDocSG.choose_action,
         getter=get_data,
         parse_mode=ParseMode.HTML
@@ -209,5 +209,5 @@ list_doc_dialog = Dialog(
         # Cancel(Const("⏪ Назад")),
         state=ListDocSG.find,
     ),
-    launch_mode=LaunchMode.SINGLE_TOP
+    launch_mode=LaunchMode.ROOT
 )
