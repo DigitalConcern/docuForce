@@ -332,7 +332,7 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                                              "documentNumber"]):
                     if doc_response_json["fields"][field["key"]] is not None:
                         try:
-                            other_fields += field["component"]["label"] + ": " + str(
+                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                 doc_response_json["fields"][field["key"]]["value"])
                         except:
                             try:
@@ -526,7 +526,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                                                  "documentNumber"]):
                         if resp["fields"][field["key"]] is not None:
                             try:
-                                other_fields += field["component"]["label"] + ": " + str(
+                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                     resp["fields"][field["key"]]["value"])
 
                             except:
@@ -536,7 +536,6 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                                 except KeyError:
                                     other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                         resp["fields"][field["key"]]) + "\n"
-                                print(other_fields)
                         else:
                             pass
             except KeyError:
