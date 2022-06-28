@@ -170,7 +170,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                 await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
                 await manager.start(TasksSG.choose_action, mode=StartMode.NEW_STACK)
     except asyncio.CancelledError:
-        return
+        raise
 
 
 async def loop_notifications_8hrs(user_id, manager):
@@ -183,12 +183,14 @@ async def loop_notifications_instant(user_id, manager):
     loop.create_task(msg_instant(user_id=user_id, manager=manager), name=str(user_id))
 
 
-def kill_task(user_id: int):
+async def kill_task(user_id: int):
     print("Пора убивать")
     for task in asyncio.all_tasks():
         if task.get_name() == str(user_id):
-            print("Task killed", task.get_name())
-            task.cancel()
+            while not task.cancelled() or not task.done():
+                print("Kill", task.get_name())
+                task.cancel()
+                await asyncio.sleep(0.5)
 
 
 async def start_notifications(user_id: int, manager: DialogManager):
@@ -202,14 +204,8 @@ async def start_notifications(user_id: int, manager: DialogManager):
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
         await loop_notifications_instant(user_id=user_id, manager=manager.bg())
     elif eight_hour_notification:
-        for task in asyncio.all_tasks():
-            if task.get_name() == str(user_id):
-                print("Task killed", task.get_name())
-                task.cancel()
+        await kill_task(user_id)
         await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
     elif instant_notification:
-        for task in asyncio.all_tasks():
-            if task.get_name() == str(user_id):
-                print("Task killed", task.get_name())
-                task.cancel()
+        await kill_task(user_id)
         await loop_notifications_instant(user_id=user_id, manager=manager.bg())
