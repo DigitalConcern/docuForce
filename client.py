@@ -154,6 +154,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                     doc_name = meta_response.json()["title"]
                 except:
                     doc_name = meta_response.json()["titles"]["en"]
+
             try:
                 for field in meta_response.json()["fields"]:
                     if field["formProperties"]["form"]["visible"] and (

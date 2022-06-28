@@ -46,7 +46,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     task_ids = []
     doc_att_ids = []
     for task in tasks_dict.keys():
-        micro_text = f"{tasks_dict[task][7]}\n<i>{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}{tasks_dict[task][6]}</i>"
+        micro_text = f"{tasks_dict[task][7]}\n<i>{tasks_dict[task][1]}{tasks_dict[task][5]} {tasks_dict[task][4]}{tasks_dict[task][2]}{tasks_dict[task][0]}\n{tasks_dict[task][6]}</i>"
         text.append(micro_text)
         doc_ids.append(tasks_dict[task][3])
         yes_names.append(tasks_dict[task][8])
