@@ -328,10 +328,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                     if doc_response_json["fields"][field["key"]] is not None:
                         try:
                             other_fields += field["component"]["label"] + ": " + str(
-                                doc_response_json["fields"][field["key"]])
+                                doc_response_json["fields"][field["key"]]["value"])
                         except:
-                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                doc_response_json["fields"][field["key"]]) + "\n"
+                            try:
+                                other_fields += field["component"]["label"] + ": " + str(
+                                    doc_response_json["fields"][field["key"]])
+                            except:
+                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                    doc_response_json["fields"][field["key"]]) + "\n"
         except:
             pass
     except:
