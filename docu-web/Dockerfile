@@ -5,7 +5,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 EXPOSE 8001
-COPY . ./app
+COPY .. ./app
 # runs the production server
 RUN chmod +x /app/docker-entry.sh
 ENTRYPOINT ["/app/docker-entry.sh"]
