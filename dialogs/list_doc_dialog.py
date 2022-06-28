@@ -41,12 +41,13 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
                 doc_list = await get_doc_list(access_token=access_token,
                                               refresh_token=refresh_token,
                                               org_id=organization,
-                                              contained_string=dialog_manager.current_context().dialog_data["find_string_doc"],
+                                              contained_string=dialog_manager.current_context().dialog_data[
+                                                  "find_string_doc"],
                                               user_id=dialog_manager.event.from_user.id)
+                dialog_manager.current_context().dialog_data["doc_list"] = doc_list
             except:
                 pass
-            await asyncio.sleep(0.5)
-            dialog_manager.current_context().dialog_data["doc_list"] = doc_list
+
     else:
         doc_list = dialog_manager.current_context().dialog_data["doc_list"]
     text = []

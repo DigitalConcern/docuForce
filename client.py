@@ -211,6 +211,26 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     return result
 
 
+async def get_tasks_amount(access_token, refresh_token, user_id, org_id):
+    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+
+    params = {
+        'showMode': "NEED_TO_ACTION",
+        'isCompleted': "false",
+        'perPage': 100,
+    }
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
+    while response.status_code != 200:
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
+
+    return len(response.json())
+
+
 async def get_task_button(access_token, refresh_token, user_id, doc_task_type, org_id):
     task_type_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/routes/flowStageTypes"
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
@@ -565,6 +585,8 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
     return result
 
 
+
+
 async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
     url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
@@ -686,6 +708,27 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
 
         ctr += 1
     return result
+
+
+async def get_conversations_amount(access_token, refresh_token, user_id, org_id):
+    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+
+    params = {'showMode': "TODOS_ONLY",
+              'isCompleted': "false",
+              "page": -1,
+              "taskDirection": "TO_ME"}
+
+    async with httpx.AsyncClient() as requests:
+        response = await requests.get(url=url, headers=headers, params=params)
+    while response.status_code != 200:
+        access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
+        headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
+        async with httpx.AsyncClient() as requests:
+            response = await requests.get(url=url, headers=headers, params=params)
+
+    tasks = response.json()
+    return len(tasks)
 
 
 async def post_markasread(access_token, refresh_token, org_id, task_id, user_id):
