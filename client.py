@@ -162,10 +162,14 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                         if task["document"]["fields"][field["key"]] is not None:
                             try:
                                 other_fields += field["component"]["label"] + ": " + str(
-                                    task["document"]["fields"][field["key"]])
+                                    task["document"]["fields"][field["key"]]["value"])
                             except:
-                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                    task["document"]["fields"][field["key"]]) + "\n"
+                                try:
+                                    other_fields += field["component"]["label"] + ": " + str(
+                                        task["document"]["fields"][field["key"]])
+                                except:
+                                    other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                        task["document"]["fields"][field["key"]]) + "\n"
                         print(other_fields)
             except:
                 pass
@@ -522,11 +526,16 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                         if resp["fields"][field["key"]] is not None:
                             try:
                                 other_fields += field["component"]["label"] + ": " + str(
-                                    resp["fields"][field["key"]])
-                            except KeyError:
-                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                    resp["fields"][field["key"]]) + "\n"
-                            print(other_fields)
+                                    resp["fields"][field["key"]]["value"])
+
+                            except:
+                                try:
+                                    other_fields += field["component"]["label"] + ": " + str(
+                                        resp["fields"][field["key"]])
+                                except KeyError:
+                                    other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                        resp["fields"][field["key"]]) + "\n"
+                                print(other_fields)
                         else:
                             pass
             except KeyError:
