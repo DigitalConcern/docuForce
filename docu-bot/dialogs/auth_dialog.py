@@ -1,14 +1,10 @@
-import asyncio
-from asyncio import CancelledError
-
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ParseMode
+from aiogram.types import Message
 
-from aiogram_dialog import ChatEvent, Dialog, DialogManager, Window, StartMode
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.manager.protocols import LaunchMode
-from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Start, Column, Select, Group
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.text import Const
 
 from client import sign_in, get_user_oguid
 from bot import MyBot

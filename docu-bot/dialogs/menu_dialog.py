@@ -1,6 +1,3 @@
-import asyncio
-from asyncio import CancelledError
-
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message
 

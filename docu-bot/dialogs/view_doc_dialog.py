@@ -1,18 +1,15 @@
 from io import BytesIO
 
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import Message, CallbackQuery, ParseMode, ContentType, InputFile
+from aiogram.types import CallbackQuery, ParseMode, ContentType, InputFile
 
-from aiogram_dialog import Dialog, DialogManager, Window, ChatEvent, StartMode
-from aiogram_dialog.manager.protocols import ManagedDialogAdapterProto, LaunchMode
-from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back, Start, Cancel, Url, Group
-from aiogram_dialog.widgets.media import StaticMedia
+from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog.manager.protocols import LaunchMode
+from aiogram_dialog.widgets.kbd import Button, Row, Cancel
 from aiogram_dialog.widgets.text import Const, Format
-import os
 
 from bot import MyBot, DynamicMedia
-from client import get_doc_dict, post_doc_action, post_doc_sign, get_tasks_dict, get_file, get_task_caption
+from client import get_doc_dict, post_doc_action, post_doc_sign, get_file
 from database import ActiveUsers, Stats
 
 

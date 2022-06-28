@@ -1,14 +1,10 @@
-import asyncio
-import time
-
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ParseMode, CallbackQuery
+from aiogram.types import ParseMode, CallbackQuery
 
-from aiogram_dialog import ChatEvent, Dialog, DialogManager, Window, StartMode
-from aiogram_dialog.manager.protocols import LaunchMode, BaseDialogManager
-from aiogram_dialog.widgets.input import TextInput, MessageInput
-from aiogram_dialog.widgets.kbd import Start, Column, Select, Group, Cancel
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog.manager.protocols import LaunchMode
+from aiogram_dialog.widgets.kbd import Select, Group
+from aiogram_dialog.widgets.text import Format
 
 from bot import MyBot
 from client import get_orgs_dict
