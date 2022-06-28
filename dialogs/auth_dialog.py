@@ -14,7 +14,7 @@ from client import sign_in, get_user_oguid
 from bot import MyBot
 from database import ActiveUsers, Stats
 from .org_dialog import OrgSG
-from notifications import loop_notifications_8hrs, loop_notifications_instant
+from notifications import loop_notifications_instant
 
 
 class AuthSG(StatesGroup):
@@ -57,7 +57,7 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
         users = (await Stats.filter(id=0).values_list("users", flat=True))[0]
         await Stats.filter(id=0).update(users=users + 1)
 
-        await loop_notifications_instant(user_id=m.from_user.id, manager=dialog_manager)
+        await loop_notifications_instant(user_id=m.from_user.id, manager=dialog_manager.bg())
 
         await dialog_manager.start(OrgSG.choose_org)
     else:

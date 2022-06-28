@@ -3,17 +3,17 @@ from asyncio import CancelledError
 from collections import defaultdict
 
 from aiogram.types import ParseMode
-from aiogram_dialog import DialogManager, StartMode
+from aiogram_dialog import StartMode, BaseDialogManager
 
 from bot import MyBot
-from client import get_tasks_dict, get_conversations_dict, get_tasks_amount, get_conversations_amount
+from client import get_tasks_dict, get_conversations_dict
 from database import ActiveUsers
 
 from dialogs.tasks_dialog import TasksSG
 from dialogs.messages_dialog import MessagesSG
 
 
-async def msg_8hrs(user_id: int, manager: DialogManager):
+async def msg_8hrs(user_id: int, manager: BaseDialogManager):
     counter = 0
     messages_in_conv = defaultdict(int)
     while True:
@@ -96,39 +96,45 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
             counter = 0
 
 
-async def msg_instant(user_id: int, manager: DialogManager):
+async def msg_instant(user_id: int, manager: BaseDialogManager):
+    messages_in_conv = defaultdict(int)
     try:
         while True:
             data = \
-                (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token",
-                                                                       "organization"))[
-                    0]
+            (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+                0]
             refresh_token, access_token, organization = data[0], data[1], data[2]
 
-            conversations = await get_conversations_amount(user_id=user_id,
-                                                           refresh_token=refresh_token,
-                                                           access_token=access_token,
-                                                           org_id=organization)
+            conversations = await get_conversations_dict(user_id=user_id,
+                                                         refresh_token=refresh_token,
+                                                         access_token=access_token,
+                                                         org_id=organization)
 
-            tasks_amount = await get_tasks_amount(user_id=user_id,
+            for conv_key in conversations.keys():
+                messages_in_conv[conv_key] = conversations[conv_key][10]
+
+            tasks_dict = await get_tasks_dict(user_id=user_id,
+                                              refresh_token=refresh_token,
+                                              access_token=access_token,
+                                              org_id=organization)
+            tasks_amount = len(tasks_dict)
+
+            await asyncio.sleep(30)
+
+            new_tasks_dict = await get_tasks_dict(user_id=user_id,
                                                   refresh_token=refresh_token,
                                                   access_token=access_token,
                                                   org_id=organization)
+            new_tasks_amount = len(new_tasks_dict)
 
-            await asyncio.sleep(60)
+            new_conversations = await get_conversations_dict(user_id=user_id,
+                                                             refresh_token=refresh_token,
+                                                             access_token=access_token,
+                                                             org_id=organization)
 
-            new_tasks_amount = await get_tasks_amount(user_id=user_id,
-                                                      refresh_token=refresh_token,
-                                                      access_token=access_token,
-                                                      org_id=organization)
-
-            new_convers_amount = await get_conversations_amount(user_id=user_id,
-                                                                refresh_token=refresh_token,
-                                                                access_token=access_token,
-                                                                org_id=organization)
-
+            new_convers_amount = len(new_conversations)
             try:
-                diff_msgs_in_conv = new_convers_amount - conversations
+                diff_msgs_in_conv = len(new_conversations) - len(messages_in_conv)
                 if diff_msgs_in_conv > 0:
                     if [11, 12, 13, 14].__contains__(diff_msgs_in_conv):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
@@ -195,7 +201,7 @@ async def is_task_active(user_id: int):
     return False
 
 
-async def start_notifications(user_id: int, manager: DialogManager):
+async def start_notifications(user_id: int, manager: BaseDialogManager):
     eight_hour_notification = \
         (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
     instant_notification = \
@@ -204,10 +210,10 @@ async def start_notifications(user_id: int, manager: DialogManager):
         (await ActiveUsers.filter(user_id=user_id).values_list("not_notification", flat=True))[0]
     if not eight_hour_notification and not instant_notification and not not_notification:
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
-        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+        await loop_notifications_instant(user_id=user_id, manager=manager)
     elif eight_hour_notification:
-        await asyncio.wait_for(kill_task(user_id), timeout=None)
-        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
+        await asyncio.wait_for(kill_task(user_id),timeout=None)
+        await loop_notifications_8hrs(user_id=user_id, manager=manager)
     elif instant_notification:
-        await asyncio.wait_for(kill_task(user_id), timeout=None)
-        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+        await asyncio.wait_for(kill_task(user_id),timeout=None)
+        await loop_notifications_instant(user_id=user_id, manager=manager)
