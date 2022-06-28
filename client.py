@@ -162,7 +162,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                                                  "documentNumber"]):
                         if task["document"]["fields"][field["key"]] is not None:
                             try:
-                                other_fields += field["component"]["label"] + ": " + str(
+                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
                                     task["document"]["fields"][field["key"]]["value"])
                             except:
                                 try:
