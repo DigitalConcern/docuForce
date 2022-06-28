@@ -100,7 +100,8 @@ async def msg_instant(user_id: int, manager: DialogManager):
     messages_in_conv = defaultdict(int)
     try:
         while True:
-            data = (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
+            data = \
+            (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
                 0]
             refresh_token, access_token, organization = data[0], data[1], data[2]
 
@@ -193,6 +194,13 @@ async def kill_task(user_id: int):
                 await asyncio.sleep(0.5)
 
 
+async def is_task_active(user_id: int):
+    for task in asyncio.all_tasks():
+        if task.get_name() == str(user_id):
+            return True
+    return False
+
+
 async def start_notifications(user_id: int, manager: DialogManager):
     eight_hour_notification = \
         (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
@@ -204,8 +212,8 @@ async def start_notifications(user_id: int, manager: DialogManager):
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
         await loop_notifications_instant(user_id=user_id, manager=manager.bg())
     elif eight_hour_notification:
-        await kill_task(user_id)
+        await asyncio.wait_for(kill_task(user_id),timeout=None)
         await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
     elif instant_notification:
-        await kill_task(user_id)
+        await asyncio.wait_for(kill_task(user_id),timeout=None)
         await loop_notifications_instant(user_id=user_id, manager=manager.bg())

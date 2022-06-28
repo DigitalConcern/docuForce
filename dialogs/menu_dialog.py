@@ -9,7 +9,7 @@ from aiogram_dialog import DialogManager, StartMode
 from bot import MyBot
 from client import get_access
 from database import ActiveUsers, Stats
-from notifications import loop_notifications_8hrs, loop_notifications_instant,start_notifications
+from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications, is_task_active
 from .auth_dialog import AuthSG
 from .messages_dialog import MessagesSG
 from .tasks_dialog import TasksSG
@@ -30,7 +30,8 @@ async def tasks(m: Message, dialog_manager: DialogManager):
         await get_access(
             refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
             user_id=m.from_user.id)
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
+        if not await is_task_active(m.from_user.id):
+            await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_tasks = (await Stats.filter(id=0).values_list("command_tasks", flat=True))[0]
         await Stats.filter(id=0).update(command_tasks=command_tasks + 1)
@@ -46,7 +47,8 @@ async def document_search(m: Message, dialog_manager: DialogManager):
         await get_access(
             refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
             user_id=m.from_user.id)
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
+        if not await is_task_active(m.from_user.id):
+            await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_search = (await Stats.filter(id=0).values_list("command_search", flat=True))[0]
         await Stats.filter(id=0).update(command_search=command_search + 1)
@@ -62,7 +64,8 @@ async def document_list(m: Message, dialog_manager: DialogManager):
         await get_access(
             refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
             user_id=m.from_user.id)
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
+        if not await is_task_active(m.from_user.id):
+            await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_documents = (await Stats.filter(id=0).values_list("command_documents", flat=True))[0]
         await Stats.filter(id=0).update(command_documents=command_documents + 1)
@@ -75,7 +78,8 @@ async def settings(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
+        if not await is_task_active(m.from_user.id):
+            await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         await dialog_manager.start(SettingsSG.choose_action, mode=StartMode.RESET_STACK)
 
@@ -88,7 +92,8 @@ async def messages(m: Message, dialog_manager: DialogManager):
         await get_access(
             refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
             user_id=m.from_user.id)
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
+        if not await is_task_active(m.from_user.id):
+            await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_messages = (
             await Stats.filter(id=0).values_list("command_messages", flat=True))[0]

@@ -1,6 +1,8 @@
 import asyncio
 from asyncio import CancelledError
 
+from aiogram_dialog import DialogManager
+
 from bot import MyBot
 from database import loop_db, ActiveUsers
 from dialogs.org_dialog import org_dialog
@@ -11,7 +13,7 @@ from dialogs.settings_dialog import settings_dialog
 from dialogs.list_doc_dialog import list_doc_dialog
 from dialogs.messages_dialog import messages_dialog
 import dialogs.menu_dialog
-from notifications import loop_notifications_8hrs, loop_notifications_instant
+from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications
 
 
 async def main():
