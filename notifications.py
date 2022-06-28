@@ -148,7 +148,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                                 await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
 
                     await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
-                    await manager.start(MessagesSG.choose_action, mode=StartMode.NEW_STACK)
+                    await manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
             except KeyError:
                 pass
 

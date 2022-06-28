@@ -278,16 +278,17 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     task_name = await get_task_button(access_token=access_token, refresh_token=refresh_token, user_id=user_id,
                                       doc_task_type=doc_task_type, org_id=org_id)
     try:
-        if (doc_response_json["fields"]["sumTotal"] is not None) and (doc_response_json["fields"]["currency"] is not None):
+        if (doc_response_json["fields"]["sumTotal"] is not None) and (
+                doc_response_json["fields"]["currency"] is not None):
             cost = "Сумма: " + str(doc_response_json["fields"]["sumTotal"]) + " " + str(
                 doc_response_json["fields"]["currency"]) + "\n"
         else:
             cost = ""
-    except :
+    except:
         cost = ""
     try:
         org__name = doc_response_json["fields"]["contractor"] + "\n"
-    except :
+    except:
         org__name = ""
     try:
         data = " от " + datetime.datetime.fromtimestamp(
@@ -301,7 +302,7 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                 doc_index += "\n"
         else:
             doc_index = ""
-    except :
+    except:
         doc_index = ""
     doc_name = ""
     other_fields = ""
@@ -312,10 +313,10 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
             meta_response = await requests.get(url=metaurl, headers=headers)
         try:
             doc_name = meta_response.json()["titles"]["ru"]
-        except :
+        except:
             try:
                 doc_name = meta_response.json()["title"]
-            except :
+            except:
                 doc_name = meta_response.json()["titles"]["en"]
 
         try:
@@ -326,13 +327,13 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                     try:
                         other_fields += field["component"]["label"] + ": " + str(
                             doc_response_json["fields"][field["key"]])
-                    except :
+                    except:
                         other_fields += field["component"]["labels"]["ru"] + ": " + str(
                             doc_response_json["fields"][field["key"]]) + "\n"
                     print(other_fields)
-        except :
+        except:
             pass
-    except :
+    except:
         pass
     text = f"{doc_name} {doc_index}{data}{org__name}{cost}{other_fields}"
     return {"len": len,
@@ -593,9 +594,12 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             data = ""
         try:
-            doc_index = " №" + str(task["document"]["fields"]["documentNumber"])
-            if data == "":
-                doc_index += "\n"
+            if task["document"]["fields"]["documentNumber"] is not None:
+                doc_index = " №" + str(task["document"]["fields"]["documentNumber"])
+                if data == "":
+                    doc_index += "\n"
+            else:
+                doc_index = ""
         except:
             doc_index = ""
         other_fields = ""
