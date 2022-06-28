@@ -169,7 +169,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-    msg_text = "<i>"
+    msg_text = ""
     match button.widget_id:
         case "yes":
             data = "SOLVED"
@@ -231,7 +231,6 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                 msg_text += "Вы отказали в обработке"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "CONFIRMATION":
                 msg_text += "Вы отказали в утверждении"
-    msg_text += "</i>"
     msg_text += f"\n\n"
     msg_text += "<i>" + dialog_manager.current_context().dialog_data["current_page"].partition('<i>')[2]
 
