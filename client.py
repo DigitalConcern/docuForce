@@ -325,13 +325,13 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                 if field["formProperties"]["form"]["visible"] and (
                         field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
                                              "documentNumber"]):
-                    try:
-                        other_fields += field["component"]["label"] + ": " + str(
-                            doc_response_json["fields"][field["key"]])
-                    except:
-                        other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                            doc_response_json["fields"][field["key"]]) + "\n"
-                    print(other_fields)
+                    if doc_response_json["fields"][field["key"]] is not None:
+                        try:
+                            other_fields += field["component"]["label"] + ": " + str(
+                                doc_response_json["fields"][field["key"]])
+                        except:
+                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                doc_response_json["fields"][field["key"]]) + "\n"
         except:
             pass
     except:
