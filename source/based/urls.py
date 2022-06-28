@@ -17,8 +17,9 @@ import os
 
 from django.contrib import admin
 from django.urls import path, include
-from source.web import views
+from web import views
 
 urlpatterns = [
     path("", views.StatsView.as_view(), name='users'),
+path('login/', include('django.contrib.auth.urls')),
 ]
