@@ -159,12 +159,13 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                     if field["formProperties"]["form"]["visible"] and (
                             field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
                                                  "documentNumber"]):
-                        try:
-                            other_fields += field["component"]["label"] + ": " + str(
-                                task["document"]["fields"][field["key"]])
-                        except:
-                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                task["document"]["fields"][field["key"]]) + "\n"
+                        if task["document"]["fields"][field["key"]] is not None:
+                            try:
+                                other_fields += field["component"]["label"] + ": " + str(
+                                    task["document"]["fields"][field["key"]])
+                            except:
+                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
+                                    task["document"]["fields"][field["key"]]) + "\n"
                         print(other_fields)
             except:
                 pass
