@@ -13,6 +13,8 @@ from dialogs.tasks_dialog import TasksSG
 from dialogs.messages_dialog import MessagesSG
 
 
+
+
 async def msg_8hrs(user_id: int, manager: DialogManager):
     counter = 0
     messages_in_conv = defaultdict(int)
@@ -96,6 +98,7 @@ async def msg_8hrs(user_id: int, manager: DialogManager):
             counter = 0
 
 
+
 async def msg_instant(user_id: int, manager: DialogManager):
     messages_in_conv = defaultdict(int)
     while True:
@@ -144,6 +147,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщения!")
                         case _:
                             await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
+
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                 await manager.start(MessagesSG.choose_action, mode=StartMode.NEW_STACK)
         except KeyError:
@@ -164,6 +168,7 @@ async def msg_instant(user_id: int, manager: DialogManager):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новые задачи!")
                     case _:
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_tasks} новых задач!")
+
             await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
             await manager.start(TasksSG.choose_action, mode=StartMode.NEW_STACK)
 

@@ -275,5 +275,5 @@ messages_dialog = Dialog(
         MessageInput(answer_message),
         state=MessagesSG.answer
     ),
-    launch_mode=LaunchMode.SINGLE_TOP
+    launch_mode=LaunchMode.ROOT
 )
