@@ -184,12 +184,11 @@ async def loop_notifications_instant(user_id, manager):
 
 
 async def kill_task(user_id: int):
-    try:
-        for task in asyncio.all_tasks():
-            if task.get_name() == str(user_id):
-                task.cancel()
-    except CancelledError:
-        pass
+
+    for task in asyncio.all_tasks():
+        if task.get_name() == str(user_id):
+            task.cancel()
+
 
 
 async def start_notifications(user_id: int, manager: DialogManager):
