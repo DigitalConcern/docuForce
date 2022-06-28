@@ -26,54 +26,46 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
                                                        access_token=access_token,
                                                        org_id=organization)
 
-        tasks_dict = await get_tasks_dict(user_id=user_id,
-                                          refresh_token=refresh_token,
-                                          access_token=access_token,
-                                          org_id=organization)
-        tasks_amount = len(tasks_dict)
-
-        for conv_key in conversations.keys():
-            messages_in_conv[conv_key] = conversations[conv_key][10]
-
-        await asyncio.sleep(5 * 60 * 5)
-
-        new_tasks_dict = await get_tasks_dict(user_id=user_id,
+        tasks_amount = await get_tasks_amount(user_id=user_id,
                                               refresh_token=refresh_token,
                                               access_token=access_token,
                                               org_id=organization)
-        new_tasks_amount = len(new_tasks_dict)
 
-        new_conversations = await get_conversations_amount(user_id=user_id,
-                                                           refresh_token=refresh_token,
-                                                           access_token=access_token,
-                                                           org_id=organization)
+        await asyncio.sleep(5 * 60 * 5)
 
-        new_convers_amount = len(new_conversations)
+        new_tasks_amount = await get_tasks_amount(user_id=user_id,
+                                                  refresh_token=refresh_token,
+                                                  access_token=access_token,
+                                                  org_id=organization)
+
+        new_convers_amount = await get_conversations_amount(user_id=user_id,
+                                                            refresh_token=refresh_token,
+                                                            access_token=access_token,
+                                                            org_id=organization)
+
         counter += 1
         if counter >= 96:
-            for conv_key in new_conversations.keys():
-                try:
-                    if messages_in_conv[conv_key] < new_conversations[conv_key][10]:
-                        diff_msgs_in_conv = new_conversations[conv_key][10] - messages_in_conv[conv_key]
-                        if diff_msgs_in_conv > 0:
-                            if [11, 12, 13, 14].__contains__(diff_msgs_in_conv):
-                                await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщений!")
-                            else:
-                                match diff_msgs_in_conv % 10:
-                                    case 1:
-                                        await MyBot.bot.send_message(user_id,
-                                                                     f"У Вас {diff_msgs_in_conv} новое сообщение!")
-                                    case 2 | 3 | 4:
-                                        await MyBot.bot.send_message(user_id,
-                                                                     f"У Вас {diff_msgs_in_conv} новых сообщения!")
-                                    case _:
-                                        await MyBot.bot.send_message(user_id,
-                                                                     f"У Вас {diff_msgs_in_conv} новых сообщений!")
-                            await manager.start(MessagesSG.choose_action)
-                        else:
-                            await MyBot.bot.send_message(user_id, f"Новых сообщений нет!")
-                except KeyError:
-                    pass
+            try:
+                diff_msgs_in_conv = new_convers_amount - conversations
+                if diff_msgs_in_conv > 0:
+                    if [11, 12, 13, 14].__contains__(diff_msgs_in_conv):
+                        await MyBot.bot.send_message(user_id, f"И {diff_msgs_in_conv} новых сообщений!")
+                    else:
+                        match diff_msgs_in_conv % 10:
+                            case 1:
+                                await MyBot.bot.send_message(user_id,
+                                                             f"У Вас {diff_msgs_in_conv} новое сообщение!")
+                            case 2 | 3 | 4:
+                                await MyBot.bot.send_message(user_id,
+                                                             f"У Вас {diff_msgs_in_conv} новых сообщения!")
+                            case _:
+                                await MyBot.bot.send_message(user_id,
+                                                             f"У Вас {diff_msgs_in_conv} новых сообщений!")
+                    await manager.start(MessagesSG.choose_action)
+                else:
+                    await MyBot.bot.send_message(user_id, f"Новых сообщений нет!")
+            except KeyError:
+                pass
 
             await ActiveUsers.filter(user_id=user_id).update(tasks_amount=new_tasks_amount,
                                                              conversations_amount=new_convers_amount)
@@ -118,11 +110,10 @@ async def msg_instant(user_id: int, manager: BaseDialogManager):
 
             await asyncio.sleep(30)
 
-            new_tasks_dict = await get_tasks_amount(user_id=user_id,
-                                                    refresh_token=refresh_token,
-                                                    access_token=access_token,
-                                                    org_id=organization)
-            new_tasks_amount = len(new_tasks_dict)
+            new_tasks_amount = await get_tasks_amount(user_id=user_id,
+                                                      refresh_token=refresh_token,
+                                                      access_token=access_token,
+                                                      org_id=organization)
 
             new_convers_amount = await get_conversations_amount(user_id=user_id,
                                                                 refresh_token=refresh_token,

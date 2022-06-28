@@ -9,7 +9,7 @@ from aiogram_dialog import DialogManager, StartMode
 from bot import MyBot
 from client import get_access
 from database import ActiveUsers, Stats
-from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications, is_task_active
+from notifications import start_notifications, is_task_active
 from .auth_dialog import AuthSG
 from .messages_dialog import MessagesSG
 from .tasks_dialog import TasksSG
