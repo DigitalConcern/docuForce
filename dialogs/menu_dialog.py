@@ -9,7 +9,7 @@ from aiogram_dialog import DialogManager, StartMode
 from bot import MyBot
 from client import get_access
 from database import ActiveUsers, Stats
-from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications
+from notifications import loop_notifications_8hrs, loop_notifications_instant
 from .auth_dialog import AuthSG
 from .messages_dialog import MessagesSG
 from .tasks_dialog import TasksSG
@@ -21,12 +21,42 @@ class MenuSG(StatesGroup):
     choose_action = State()
 
 
+async def start_notifications(user_id: int, manager: DialogManager):
+    eight_hour_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("eight_hour_notification", flat=True))[0]
+    instant_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("instant_notification", flat=True))[0]
+    not_notification = \
+        (await ActiveUsers.filter(user_id=user_id).values_list("not_notification", flat=True))[0]
+    if not eight_hour_notification and not instant_notification and not not_notification:
+        await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+    elif eight_hour_notification:
+        try:
+            for task in asyncio.all_tasks():
+                if task.get_name() == str(user_id):
+                    task.cancel()
+        except CancelledError:
+            pass
+        await loop_notifications_8hrs(user_id=user_id, manager=manager.bg())
+    elif instant_notification:
+        try:
+            for task in asyncio.all_tasks():
+                if task.get_name() == str(user_id):
+                    task.cancel()
+        except CancelledError:
+            pass
+        await loop_notifications_instant(user_id=user_id, manager=manager.bg())
+
+
 async def tasks(m: Message, dialog_manager: DialogManager):
     if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
-        await get_access(refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],user_id=m.from_user.id)
+        await get_access(
+            refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
+            user_id=m.from_user.id)
         await start_notifications(user_id=m.from_user.id, manager=dialog_manager)
 
         command_tasks = (await Stats.filter(id=0).values_list("command_tasks", flat=True))[0]
