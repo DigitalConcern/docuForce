@@ -169,19 +169,11 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
                                                                                         "organization"))[0]
     refresh_token, access_token, organization = data[0], data[1], data[2]
-    msg_text = "<b>"
+    msg_text = "<i>"
     match button.widget_id:
         case "yes":
             data = "SOLVED"
-            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
-                await post_doc_action(access_token=access_token,
-                                      refresh_token=refresh_token,
-                                      org_id=organization,
-                                      task_id=dialog_manager.current_context().dialog_data["task_id"],
-                                      action=data,
-                                      user_id=c.from_user.id)
-                msg_text += "🆗"
-            else:
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "SIGNING":
                 await post_doc_sign(access_token=access_token,
                                     refresh_token=refresh_token,
                                     org_id=organization,
@@ -189,16 +181,34 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                     att_doc_id=dialog_manager.current_context().dialog_data["doc_att_id"],
                                     doc_id=dialog_manager.current_context().dialog_data["current_doc_id"],
                                     user_id=dialog_manager.event.from_user.id)
-                msg_text += "🖋Документ "
 
-            msg_mini_text = (await get_task_caption(access_token=access_token, refresh_token=refresh_token,
-                                                    user_id=dialog_manager.event.from_user.id,
-                                                    doc_task_type=dialog_manager.current_context().dialog_data[
-                                                        'task_type_service'], org_id=organization, is_done=True))
-            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
-                msg_text += msg_mini_text
+                msg_text += "🖋 "
             else:
-                msg_text += msg_mini_text.lower()
+                await post_doc_action(access_token=access_token,
+                                      refresh_token=refresh_token,
+                                      org_id=organization,
+                                      task_id=dialog_manager.current_context().dialog_data["task_id"],
+                                      action=data,
+                                      user_id=c.from_user.id)
+                msg_text += "🆗 "
+
+            # msg_mini_text = (await get_task_caption(access_token=access_token, refresh_token=refresh_token,
+            #                                         user_id=dialog_manager.event.from_user.id,
+            #                                         doc_task_type=dialog_manager.current_context().dialog_data[
+            #                                             'task_type_service'], org_id=organization, is_done=True))
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
+                msg_text += "Вы согласовали документ"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "SIGNING":
+                msg_text += "Вы подписали документ"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "INSPECTION":
+                msg_text += "Вы проинспектировали документ"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "ACQUAINTANCE":
+                msg_text += "Вы ознакомились с документом"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "PROCESSING":
+                msg_text += "Вы обработали документ"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "CONFIRMATION":
+                msg_text += "Вы утвердили документ"
+
         case "no":
             msg_text += "🚫"
             data = "DECLINED"
@@ -209,7 +219,19 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                                                user_id=dialog_manager.event.from_user.id,
                                                doc_task_type=dialog_manager.current_context().dialog_data[
                                                    'task_type_service'], org_id=organization, is_done=False)
-    msg_text += "</b>"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
+                msg_text += "Вы отказали в согласовании документа"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "SIGNING":
+                msg_text += "Вы отказали в подписи документа"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "INSPECTION":
+                msg_text += "Вы отказали в инспектировании документа"
+            # if dialog_manager.current_context().dialog_data["task_type_service"] == "ACQUAINTANCE":
+            #     msg_text += "Вы ознакомились с документом"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "PROCESSING":
+                msg_text += "Вы отказали в обработке"
+            if dialog_manager.current_context().dialog_data["task_type_service"] == "CONFIRMATION":
+                msg_text += "Вы отказали в утверждении"
+    msg_text += "</i>"
     msg_text += f"\n\n"
     msg_text += "<i>" + dialog_manager.current_context().dialog_data["current_page"].partition('<i>')[2]
 
