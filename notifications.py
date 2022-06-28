@@ -6,7 +6,7 @@ from aiogram.types import ParseMode
 from aiogram_dialog import StartMode, BaseDialogManager
 
 from bot import MyBot
-from client import get_tasks_dict, get_conversations_dict
+from client import get_tasks_dict, get_conversations_dict, get_tasks_amount, get_conversations_amount
 from database import ActiveUsers
 
 from dialogs.tasks_dialog import TasksSG
@@ -21,10 +21,10 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
             0]
         refresh_token, access_token, organization = data[0], data[1], data[2]
 
-        conversations = await get_conversations_dict(user_id=user_id,
-                                                     refresh_token=refresh_token,
-                                                     access_token=access_token,
-                                                     org_id=organization)
+        conversations = await get_conversations_amount(user_id=user_id,
+                                                       refresh_token=refresh_token,
+                                                       access_token=access_token,
+                                                       org_id=organization)
 
         tasks_dict = await get_tasks_dict(user_id=user_id,
                                           refresh_token=refresh_token,
@@ -43,10 +43,10 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
                                               org_id=organization)
         new_tasks_amount = len(new_tasks_dict)
 
-        new_conversations = await get_conversations_dict(user_id=user_id,
-                                                         refresh_token=refresh_token,
-                                                         access_token=access_token,
-                                                         org_id=organization)
+        new_conversations = await get_conversations_amount(user_id=user_id,
+                                                           refresh_token=refresh_token,
+                                                           access_token=access_token,
+                                                           org_id=organization)
 
         new_convers_amount = len(new_conversations)
         counter += 1
@@ -101,40 +101,36 @@ async def msg_instant(user_id: int, manager: BaseDialogManager):
     try:
         while True:
             data = \
-            (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token", "organization"))[
-                0]
+                (await ActiveUsers.filter(user_id=user_id).values_list("refresh_token", "access_token",
+                                                                       "organization"))[
+                    0]
             refresh_token, access_token, organization = data[0], data[1], data[2]
 
-            conversations = await get_conversations_dict(user_id=user_id,
-                                                         refresh_token=refresh_token,
-                                                         access_token=access_token,
-                                                         org_id=organization)
+            conversations = await get_conversations_amount(user_id=user_id,
+                                                           refresh_token=refresh_token,
+                                                           access_token=access_token,
+                                                           org_id=organization)
 
-            for conv_key in conversations.keys():
-                messages_in_conv[conv_key] = conversations[conv_key][10]
-
-            tasks_dict = await get_tasks_dict(user_id=user_id,
-                                              refresh_token=refresh_token,
-                                              access_token=access_token,
-                                              org_id=organization)
-            tasks_amount = len(tasks_dict)
-
-            await asyncio.sleep(30)
-
-            new_tasks_dict = await get_tasks_dict(user_id=user_id,
+            tasks_amount = await get_tasks_amount(user_id=user_id,
                                                   refresh_token=refresh_token,
                                                   access_token=access_token,
                                                   org_id=organization)
+
+            await asyncio.sleep(30)
+
+            new_tasks_dict = await get_tasks_amount(user_id=user_id,
+                                                    refresh_token=refresh_token,
+                                                    access_token=access_token,
+                                                    org_id=organization)
             new_tasks_amount = len(new_tasks_dict)
 
-            new_conversations = await get_conversations_dict(user_id=user_id,
-                                                             refresh_token=refresh_token,
-                                                             access_token=access_token,
-                                                             org_id=organization)
+            new_convers_amount = await get_conversations_amount(user_id=user_id,
+                                                                refresh_token=refresh_token,
+                                                                access_token=access_token,
+                                                                org_id=organization)
 
-            new_convers_amount = len(new_conversations)
             try:
-                diff_msgs_in_conv = len(new_conversations) - len(messages_in_conv)
+                diff_msgs_in_conv = new_convers_amount - conversations
                 if diff_msgs_in_conv > 0:
                     if [11, 12, 13, 14].__contains__(diff_msgs_in_conv):
                         await MyBot.bot.send_message(user_id, f"У Вас {diff_msgs_in_conv} новых сообщений!")
@@ -212,8 +208,8 @@ async def start_notifications(user_id: int, manager: BaseDialogManager):
         await ActiveUsers.filter(user_id=user_id).update(instant_notification=True)
         await loop_notifications_instant(user_id=user_id, manager=manager)
     elif eight_hour_notification:
-        await asyncio.wait_for(kill_task(user_id),timeout=None)
+        await asyncio.wait_for(kill_task(user_id), timeout=None)
         await loop_notifications_8hrs(user_id=user_id, manager=manager)
     elif instant_notification:
-        await asyncio.wait_for(kill_task(user_id),timeout=None)
+        await asyncio.wait_for(kill_task(user_id), timeout=None)
         await loop_notifications_instant(user_id=user_id, manager=manager)
