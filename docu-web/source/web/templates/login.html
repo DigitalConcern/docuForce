@@ -16,20 +16,20 @@
 </head>
 
 <body>
-    <div class="my-3 container-md gap-3">
+    <div class="my-3 mx-3 container-sm gap-3 position-relative top-0 start-50 translate-middle-x">
         <form method="POST" action="{% url 'login' %}">
-            <div class="vstack gap-3 position-relative top-50 start-50 translate-middle-x">
+            <div class="vstack gap-3">
                 {% csrf_token %}
-                    <div class="row form-control mb-3">
+                    <div class="row form-control">
                       <label>Логин</label>
                       {{form.username}}
                     </div>
-                    <div class="row form-control mb-3">
+                    <div class="row form-control">
                       <label>Пароль</label>
                       {{form.password}}
                     </div>
-                    <div class="row mb-3">
-                        <button type="submit" class="btn btn-success">Войти</button>
+                    <div>
+                        <button type="submit" class="btn btn-success ">Войти</button>
                     </div>
                 {{ form.errors }}
             </div>
