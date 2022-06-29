@@ -47,16 +47,16 @@ async def run():
                 "default": {
                     "engine": "tortoise.backends.asyncpg",
                     "credentials": {
-                        # "database":  os.environ.get('POSTGRES_NAME'),
-                        # "host": "db",
-                        # "password": os.environ.get('POSTGRES_PASSWORD'),
-                        # "port": 5432,
-                        # "user": os.environ.get('POSTGRES_USER'),
-                        "database": "postgres",
-                        "host": "localhost",
-                        "password": "12345",
+                        "database":  os.environ.get('POSTGRES_NAME'),
+                        "host": "db",
+                        "password": os.environ.get('POSTGRES_PASSWORD'),
                         "port": 5432,
-                        "user": "postgres"
+                        "user": os.environ.get('POSTGRES_USER'),
+                        # "database": "postgres",
+                        # "host": "localhost",
+                        # "password": "12345",
+                        # "port": 5432,
+                        # "user": "postgres"
                     }
                 }
             },
