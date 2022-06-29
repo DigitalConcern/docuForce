@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
 from pathlib import Path
+
 # from web import models
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,9 @@ SECRET_KEY = 'django-insecure-3a^=cu%_+#50gw%@$$^$3v6=-^g5!71f)g0+qi8lh_x3(3n_1f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*", "5.253.62.114"]
+
+CSRF_TRUSTED_ORIGINS = ['http://5.253.62.114:1337']
 
 # Application definition
 
@@ -128,5 +131,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-

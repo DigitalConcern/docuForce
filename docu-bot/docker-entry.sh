@@ -1,5 +1,5 @@
 #!/bin/sh
 
-sleep 5
+sleep 7
 
 python /bapp/main.py
