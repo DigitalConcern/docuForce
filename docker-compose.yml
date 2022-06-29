@@ -17,3 +17,13 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
+  bot:
+    build: ./docu-bot
+    ports:
+      - "8002:8002"
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      - db

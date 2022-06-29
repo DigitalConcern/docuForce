@@ -1,0 +1,8 @@
+FROM python:3.10
+# copy project
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+COPY . ./bapp
+# runs the production server
+RUN chmod +x /bapp/docker-entry.sh
+ENTRYPOINT ["/bapp/docker-entry.sh"]

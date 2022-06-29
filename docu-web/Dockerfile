@@ -5,7 +5,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 EXPOSE 8001
-COPY ../../../Изображения/Camera%20Roll/docuForce ./app
+COPY . ./wapp
 # runs the production server
-RUN chmod +x /app/docker-entry.sh
-ENTRYPOINT ["/app/docker-entry.sh"]
+RUN chmod +x /wapp/docker-entry.sh
+ENTRYPOINT ["/wapp/docker-entry.sh"]

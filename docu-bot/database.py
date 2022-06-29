@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from tortoise import Tortoise, fields
 from tortoise.models import Model
@@ -46,11 +47,11 @@ async def run():
                 "default": {
                     "engine": "tortoise.backends.asyncpg",
                     "credentials": {
-                        "database": "d21crbfi20lfgt",
-                        "host": "ec2-52-212-228-71.eu-west-1.compute.amazonaws.com",
-                        "password": "78ebf737332e11b62f868e64a5a1445d523d768b95deb51b148127f01ee0b026",
+                        "database":  os.environ.get('POSTGRES_NAME'),
+                        "host": "db",
+                        "password": os.environ.get('POSTGRES_PASSWORD'),
                         "port": 5432,
-                        "user": "ifkppiqumhvrja"
+                        "user": os.environ.get('POSTGRES_USER'),
                     }
                 }
             },
