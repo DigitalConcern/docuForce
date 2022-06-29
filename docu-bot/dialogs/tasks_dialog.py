@@ -214,10 +214,10 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
             await post_doc_action(access_token, refresh_token, organization,
                                   dialog_manager.current_context().dialog_data["task_id"], data, c.from_user.id)
 
-            msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
-                                               user_id=dialog_manager.event.from_user.id,
-                                               doc_task_type=dialog_manager.current_context().dialog_data[
-                                                   'task_type_service'], org_id=organization, is_done=False)
+            # msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
+            #                                    user_id=dialog_manager.event.from_user.id,
+            #                                    doc_task_type=dialog_manager.current_context().dialog_data[
+            #                                        'task_type_service'], org_id=organization, is_done=False)
             if dialog_manager.current_context().dialog_data["task_type_service"] == "APPROVAL":
                 msg_text += "Вы отказали в согласовании документа"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "SIGNING":
