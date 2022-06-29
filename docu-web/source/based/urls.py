@@ -21,5 +21,5 @@ from web import views
 
 urlpatterns = [
     path("", views.StatsView.as_view(), name='users'),
-path('login/', include('django.contrib.auth.urls')),
+    path('login/', views.LoginView.as_view(), name='login')
 ]

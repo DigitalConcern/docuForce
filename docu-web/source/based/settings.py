@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
 from pathlib import Path
-
 # from web import models
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'web',
+    'web'
 ]
 
 MIDDLEWARE = [
@@ -51,6 +50,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'based.urls'
+
+LOGIN_REDIRECT_URL = "/"
 
 TEMPLATES = [
     {
@@ -76,11 +77,11 @@ WSGI_APPLICATION = 'source.based.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('POSTGRES_NAME'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': "db",
-        'PORT': 5432,
+        'NAME': 'd21crbfi20lfgt',
+        'USER': 'ifkppiqumhvrja',
+        'PASSWORD': '78ebf737332e11b62f868e64a5a1445d523d768b95deb51b148127f01ee0b026',
+        'HOST': "ec2-52-212-228-71.eu-west-1.compute.amazonaws.com",
+        'PORT': '5432',
     }
 }
 
@@ -123,3 +124,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+

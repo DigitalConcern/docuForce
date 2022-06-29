@@ -1,4 +1,6 @@
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView
+from django.contrib.auth import views as auth_views
 from . import models
 
 
@@ -17,3 +19,11 @@ class StatsView(TemplateView):
         context['tasks_done'] = models.Stats.objects.values_list("tasks_done", flat=True).get(pk=0)
         context['messages_done'] = models.Stats.objects.values_list("messages_done", flat=True).get(pk=0)
         return context
+
+
+class LoginView(auth_views.LoginView):
+    template_name = 'login.html'
+
+    def get_success_url(self):
+        return reverse_lazy('/')
+
