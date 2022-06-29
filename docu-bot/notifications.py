@@ -98,7 +98,7 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
                     await manager.start(TasksSG.choose_action, mode=StartMode.NEW_STACK)
                 counter = 0
 
-            await asyncio.sleep(2 * 60)
+            await asyncio.sleep(5 * 60)
     except asyncio.CancelledError:
         raise
 
