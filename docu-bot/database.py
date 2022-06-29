@@ -52,6 +52,11 @@ async def run():
                         "password": os.environ.get('POSTGRES_PASSWORD'),
                         "port": 5432,
                         "user": os.environ.get('POSTGRES_USER'),
+                        # "database": "postgres",
+                        # "host": "localhost",
+                        # "password": "12345",
+                        # "port": 5432,
+                        # "user": "postgres"
                     }
                 }
             },

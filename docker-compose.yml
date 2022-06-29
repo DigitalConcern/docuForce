@@ -27,3 +27,9 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
+  nginx:
+    build: ./nginx
+    ports:
+      - "1337:80"
+    depends_on:
+      - web

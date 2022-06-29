@@ -1,6 +1,7 @@
 import asyncio
 from asyncio import CancelledError
 
+import tortoise.exceptions
 from aiogram_dialog import DialogManager
 
 from bot import MyBot
@@ -17,10 +18,6 @@ from notifications import loop_notifications_8hrs, loop_notifications_instant, s
 
 
 async def main():
-    try:
-        await Stats(id=0).save()
-    except:
-        pass
     MyBot.register_dialogs(auth_dialog)
     MyBot.register_dialogs(org_dialog)
     MyBot.register_dialogs(tasks_dialog)
@@ -30,7 +27,12 @@ async def main():
     MyBot.register_dialogs(messages_dialog)
 
     await loop_db()
+
     await asyncio.sleep(5)
+    try:
+        await Stats(id=0).save()
+    except tortoise.exceptions.IntegrityError:
+        pass
     for user_id in (await ActiveUsers.filter().values_list("user_id", flat=True)):
         await MyBot.bot.send_message(chat_id=user_id,
                                      text="Бот перезапущен! Чтобы продолжить работу - отправьте любую команду")
