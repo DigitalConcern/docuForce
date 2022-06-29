@@ -178,6 +178,9 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     command_tasks = (await Stats.filter(id=0).values_list("command_tasks", flat=True))[0]
     await Stats.filter(id=0).update(command_tasks=command_tasks + 1)
 
+    tasks_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("tasks_amount", flat=True))[0]
+    await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(tasks_amount=tasks_amount - 1)
+
     await dialog_manager.done()
 
 

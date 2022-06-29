@@ -178,6 +178,9 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
     messages_done = (await Stats.filter(id=0).values_list("messages_done", flat=True))[0]
     await Stats.filter(id=0).update(messages_done=messages_done + 1)
 
+    convs_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount", flat=True))[0]
+    await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(conversations_amount=convs_amount - 1)
+
     await dialog_manager.done()
 
     await asyncio.sleep(1)
@@ -204,6 +207,9 @@ async def close_msg(m: Message, dialog: Dialog, dialog_manager: DialogManager):
 
     messages_done = (await Stats.filter(id=0).values_list("messages_done", flat=True))[0]
     await Stats.filter(id=0).update(messages_done=messages_done + 1)
+
+    convs_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount", flat=True))[0]
+    await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(conversations_amount=convs_amount - 1)
 
     await dialog_manager.done()
 
