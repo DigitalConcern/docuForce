@@ -53,8 +53,6 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
         users = (await Stats.filter(id=0).values_list("users", flat=True))[0]
         await Stats.filter(id=0).update(users=users + 1)
 
-        await start_notifications(user_id=m.from_user.id, manager=dialog_manager.bg())
-
         await dialog_manager.start(OrgSG.choose_org)
     else:
         await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль ❌\nПопробуйте еще раз!",
