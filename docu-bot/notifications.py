@@ -89,7 +89,7 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
 
 
 async def msg_instant(user_id: int, manager: BaseDialogManager):
-    messages_in_conv = defaultdict(int)
+    # messages_in_conv = defaultdict(int)
     try:
         while True:
             data = \
@@ -108,7 +108,7 @@ async def msg_instant(user_id: int, manager: BaseDialogManager):
                                                   access_token=access_token,
                                                   org_id=organization)
 
-            await asyncio.sleep(60)
+            await asyncio.sleep(5*60)
 
             new_tasks_amount = await get_tasks_amount(user_id=user_id,
                                                       refresh_token=refresh_token,
