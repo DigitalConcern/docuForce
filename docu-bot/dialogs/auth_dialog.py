@@ -1,7 +1,7 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message
 
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, Window, StartMode
 from aiogram_dialog.manager.protocols import LaunchMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.text import Const
@@ -10,7 +10,7 @@ from client import sign_in, get_user_oguid
 from bot import MyBot
 from database import ActiveUsers, Stats
 from .org_dialog import OrgSG
-from notifications import loop_notifications_instant,start_notifications
+from notifications import loop_notifications_instant, start_notifications
 
 
 class AuthSG(StatesGroup):
@@ -73,3 +73,14 @@ auth_dialog = Dialog(
     ),
     launch_mode=LaunchMode.ROOT
 )
+
+
+async def startbot(m: Message, dialog_manager: DialogManager):
+    if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
+        await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
+        await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
+    else:
+        await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизовались! ✅", parse_mode="HTML")
+
+
+MyBot.register_handler(method=startbot, commands="start", state="*")
