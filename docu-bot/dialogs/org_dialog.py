@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.text import Format
 from bot import MyBot
 from client import get_orgs_dict
 from database import ActiveUsers
-
+from metadata import Metadata
 
 class OrgSG(StatesGroup):
     choose_org = State()
@@ -42,6 +42,9 @@ async def on_org_clicked(c: CallbackQuery, select: Select, dialog_manager: Dialo
     org_name = dialog_manager.current_context().dialog_data["organization_dict"][item_id][0]
 
     await ActiveUsers.filter(user_id=c.from_user.id).update(organization=org_uuid)
+
+    access_token = (await ActiveUsers.filter(user_id=c.from_user.id).values_list("access_token", flat=True))[0]
+    await Metadata.update_meta(user_id=c.from_user.id, access_token=access_token)
 
     await MyBot.bot.send_message(c.from_user.id, f"Организация\n{org_name}\nуспешно выбрана!")
     await MyBot.bot.send_message(c.from_user.id, f"Теперь Вы можете использовать любую команду из меню!")

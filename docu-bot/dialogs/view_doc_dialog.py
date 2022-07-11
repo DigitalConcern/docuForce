@@ -45,7 +45,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
     dialog_manager.current_context().dialog_data["len"] = int(doc["len"])
     dialog_manager.current_context().dialog_data["doc_att_id"] = doc["doc_att_id"]
-    if dialog_manager.current_context().dialog_data["len"] == 1:
+    if dialog_manager.current_context().dialog_data["len"] <= 1:
         dialog_manager.current_context().dialog_data["is_not_last"] = False
 
     dialog_manager.current_context().dialog_data["is_task"] = dialog_manager.current_context().dialog_data.get(
@@ -63,11 +63,14 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
 
     await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
+
+
+
     return {
         'is_not_first': dialog_manager.current_context().dialog_data.get("is_not_first", False),
         'is_not_last': dialog_manager.current_context().dialog_data.get("is_not_last", True),
         'len': dialog_manager.current_context().dialog_data["len"],
-        'is_not_one': dialog_manager.current_context().dialog_data["len"] != 1,
+        'is_not_one': dialog_manager.current_context().dialog_data["len"] > 1,
         'counter': dialog_manager.current_context().dialog_data["counter"],
         'is_task': dialog_manager.current_context().dialog_data.get("is_task", False),
         'yes_name': dialog_manager.current_context().dialog_data.get("yes_name", "Да"),

@@ -33,18 +33,13 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.current_context().dialog_data["doc_list"] = dialog_manager.current_context().dialog_data.get(
         "doc_list", "")
     if dialog_manager.current_context().dialog_data["doc_list"] == "":
-        while dialog_manager.current_context().dialog_data["doc_list"] == "":
-            try:
-                doc_list = await get_doc_list(access_token=access_token,
-                                              refresh_token=refresh_token,
-                                              org_id=organization,
-                                              contained_string=dialog_manager.current_context().dialog_data[
-                                                  "find_string_doc"],
-                                              user_id=dialog_manager.event.from_user.id)
-                dialog_manager.current_context().dialog_data["doc_list"] = doc_list
-            except:
-                pass
-
+        doc_list = await get_doc_list(access_token=access_token,
+                                      refresh_token=refresh_token,
+                                      org_id=organization,
+                                      contained_string=dialog_manager.current_context().dialog_data[
+                                          "find_string_doc"],
+                                      user_id=dialog_manager.event.from_user.id)
+        dialog_manager.current_context().dialog_data["doc_list"] = doc_list
     else:
         doc_list = dialog_manager.current_context().dialog_data["doc_list"]
     text = []

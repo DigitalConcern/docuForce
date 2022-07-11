@@ -77,10 +77,17 @@ class SuperMesssageManager(MessageManager):
         if media.file_id:
             return media.file_id.file_id
         if media.url:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url=media.url, headers=media.url_headers)
-            if (response.status_code != 200) or (response.text == ""):
-                return open(pathlib.Path("resources/white.png"), "rb")
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.get(url=media.url, headers=media.url_headers)
+                ttext=response.text
+            except:
+                ttext = ""
+            try:
+                if (response.status_code != 200) or (ttext == ""):
+                    return open(pathlib.Path("bapp/resources/not-found.png"), "rb")
+            except:
+                return open(pathlib.Path("bapp/resources/not-found.png"), "rb")
 
             return BytesIO(base64.b64decode(response.text))
         else:

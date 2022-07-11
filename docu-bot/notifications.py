@@ -3,7 +3,7 @@ from asyncio import CancelledError
 from collections import defaultdict
 
 from aiogram.types import ParseMode
-from aiogram_dialog import StartMode, BaseDialogManager
+from aiogram_dialog import StartMode, BaseDialogManager, ShowMode
 
 from bot import MyBot
 from client import get_tasks_dict, get_conversations_dict, get_tasks_amount, get_conversations_amount
@@ -75,7 +75,7 @@ async def msg_8hrs(user_id: int, manager: BaseDialogManager):
 
                     await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                     await ActiveUsers.filter(user_id=user_id).update(conversations_amount=new_convers_amount)
-                    await manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
+                    await manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK, show_mode=ShowMode.SEND)
 
                 await asyncio.sleep(2)
 
@@ -162,7 +162,7 @@ async def msg_instant(user_id: int, manager: BaseDialogManager):
 
                 await ActiveUsers.filter(user_id=user_id).update(new_convs=diff_msgs_in_conv)
                 await ActiveUsers.filter(user_id=user_id).update(conversations_amount=new_convers_amount)
-                await manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK)
+                await manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK, show_mode=ShowMode.SEND)
 
             await asyncio.sleep(2)
 
@@ -200,11 +200,9 @@ async def loop_notifications_instant(user_id, manager):
 
 
 async def kill_task(user_id: int):
-    print("Пора убивать")
     for task in asyncio.all_tasks():
         if task.get_name() == str(user_id):
             while not task.cancelled() or not task.done():
-                print("Kill", task.get_name())
                 task.cancel()
                 await asyncio.sleep(0.5)
 

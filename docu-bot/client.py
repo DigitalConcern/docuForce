@@ -4,7 +4,7 @@ from collections import defaultdict
 import httpx
 # import await requests
 import datetime
-
+from metadata import Metadata
 from database import ActiveUsers
 from bot import MyBot
 
@@ -15,9 +15,9 @@ async def sign_in(login, password) -> (str, str):
         "email": login,
         "password": password
     }
-    url = "https://api.docuforce.infologistics.ru/signin"
+    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/signin"
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, json=data, headers=headers)
 
     if response.status_code != 200:
@@ -32,14 +32,14 @@ async def sign_in(login, password) -> (str, str):
 async def get_user_oguid(access_token, refresh_token, user_id) -> str:
     headers = {"Access-Token": f"{access_token}"}
 
-    url = "https://api.docuforce.infologistics.ru/user"
-    async with httpx.AsyncClient() as requests:
+    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers)
     user_oguid = response.json()["oguid"]
 
     while response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.post(url=url, headers=headers)
         user_oguid = response.json()["oguid"]
 
@@ -51,8 +51,8 @@ async def get_access(refresh_token, user_id) -> str:
     data = {
         "value": f"{refresh_token}",
     }
-    url = "https://api.docuforce.infologistics.ru/token-refresh"
-    async with httpx.AsyncClient() as requests:
+    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/token-refresh"
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, json=data, headers=headers)
 
     if response.status_code != 200:
@@ -67,8 +67,8 @@ async def get_access(refresh_token, user_id) -> str:
 
 async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
     headers = {"Access-Token": f"{access_token}"}
-    url = "https://api.docuforce.infologistics.ru/user"
-    async with httpx.AsyncClient() as requests:
+    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers)
 
     orgs = response.json()["orgs"]
@@ -80,7 +80,7 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
 
     while response.status_code != 200:
         await get_access(refresh_token=refresh_token, user_id=user_id)
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers)
 
     return result
@@ -88,31 +88,36 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
 
 async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
     params = {
         'showMode': "NEED_TO_ACTION",
         'isCompleted': "false",
         'perPage': 100,
     }
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
 
-    types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
-    types_url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/routes/flowStageTypes"
-    async with httpx.AsyncClient() as requests:
-        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
-
-    response_types_list = response_types.json()
     tasks = response.json()
 
     result = {}
     ctr = 0
+
+    full_meta_response = (await Metadata.get_meta(user_id=user_id))
+    try:
+        response_types_list = full_meta_response["flowStageTypes"]
+    except:
+        response_types_list = {}
+    try:
+        full_doc_meta_response = full_meta_response["userTypes"]
+    except:
+        full_doc_meta_response = {}
+
     for task in tasks:
         try:
             if (task["document"]["fields"]["sumTotal"] is not None) and (
@@ -124,7 +129,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
         except:
             cost = ""
         try:
-            org__name = task["document"]["fields"]["contractor"] + "\n"
+            org__name = task["document"]["fields"]["contractor"]["nameShort"] + "\n"
         except:
             org__name = ""
         try:
@@ -141,42 +146,70 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                 doc_index = ""
         except:
             doc_index = ""
+
+        other_fields_list = []
         other_fields = ""
         try:
             doc_key = str(task["document"]["type"])
-            meta_url = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            async with httpx.AsyncClient() as requests:
-                meta_response = await requests.get(url=meta_url, headers=headers)
+            if doc_key not in full_doc_meta_response.keys():
+                await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                full_doc_meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+            meta_response = full_doc_meta_response[doc_key]
             try:
-                doc_name = meta_response.json()["titles"]["ru"]
+                doc_name = meta_response["titles"]["ru"]
             except:
                 try:
-                    doc_name = meta_response.json()["title"]
+                    doc_name = meta_response["title"]
                 except:
-                    doc_name = meta_response.json()["titles"]["en"]
+                    doc_name = meta_response["titles"]["en"]
 
             try:
-                for field in meta_response.json()["fields"]:
-                    if field["formProperties"]["form"]["visible"] and (
-                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-                                                 "documentNumber"]):
-                        if task["document"]["fields"][field["key"]] is not None:
+                for field in task["document"]["fields"].keys():
+                    if field not in meta_response["fields"].keys():
+                        await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                        meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+                    if meta_response["fields"][field]["formProperties"]["form"]["visible"] and not \
+                            meta_response["fields"][field]["isSystem"] and (
+                            field not in ["sumTotal", "currency", "contractor", "documentDate",
+                                          "documentNumber"]):
+                        field_value = None
+                        try:
+                            field_value = task["document"]["fields"][field]["value"]
+                        except:
+                            field_value = task["document"]["fields"][field]
+
+                        if field_value is not None:
+
                             try:
-                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                    task["document"]["fields"][field["key"]]["value"])
+                                other_fields_list.append(
+                                    [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                     meta_response["fields"][field]["component"]["labels"]["ru"] + ": " + str(
+                                         field_value)])
                             except:
                                 try:
-                                    other_fields += field["component"]["label"] + ": " + str(
-                                        task["document"]["fields"][field["key"]])
+                                    other_fields_list.append(
+                                        [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                         meta_response["fields"][field]["component"]["label"] + ": " + str(
+                                             field_value)])
                                 except:
-                                    other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                        task["document"]["fields"][field["key"]]) + "\n"
-                        print(other_fields)
+                                    other_fields_list.append(
+                                        [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                         meta_response["fields"][field]["component"]["labels"]["en"] + ": " + str(
+                                             field_value)])
+                other_fields_list.sort()
+                for field, numb in zip(other_fields_list, range(3)):
+                    other_fields += field[1]
             except:
                 pass
         except:
             doc_name = ""
         stage = f"<b>Завершено</b>\n"
+        check_list = []
+        for ttype in response_types_list:
+            check_list.append(ttype["type"])
+        if task["document"]['flowStageType'] not in check_list:
+            await Metadata.update_meta(user_id=user_id, access_token=access_token)
+            response_types_list = (await Metadata.get_meta(user_id=user_id))["flowStageTypes"]
         for stage_type in response_types_list:
             try:
                 if stage_type["type"] == task["document"]['flowStageType']:
@@ -185,14 +218,16 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                     else:
                         stage = "👌🏻 "
                     stage += f"<b>{stage_type['name']}</b>\n"
+                    try:
+                        button = stage_type["buttonCaption"]
+                        # await get_task_button(doc_task_type=task["document"]['flowStageType'], org_id=org_id,
+                        #                                access_token=access_token, refresh_token=refresh_token,
+                        #                                user_id=user_id)
+                    except:
+                        button = ""
             except KeyError:
                 pass
 
-        try:
-            button = await get_task_button(doc_task_type=task["document"]['flowStageType'], org_id=org_id,
-                                           access_token=access_token, refresh_token=refresh_token, user_id=user_id)
-        except:
-            button = ""
         result[f"{ctr}"] = (cost,
                             org__name,
                             data,
@@ -213,79 +248,43 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
 
 async def get_tasks_amount(access_token, refresh_token, user_id, org_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
     params = {
         'showMode': "NEED_TO_ACTION",
         'isCompleted': "false",
         'perPage': 100,
     }
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
 
     return len(response.json())
 
 
-async def get_task_button(access_token, refresh_token, user_id, doc_task_type, org_id):
-    task_type_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/routes/flowStageTypes"
-    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    async with httpx.AsyncClient() as requests:
-        type_response = await requests.get(url=task_type_url, headers=headers)
-    while type_response.status_code != 200:
-        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
-        async with httpx.AsyncClient() as requests:
-            type_response = await requests.get(url=task_type_url, headers=headers)
-    types_response_json = type_response.json()
-
-    doc_task_name = ""
-    for type in types_response_json:
-        if type["type"] == doc_task_type:
-            doc_task_name = type["buttonCaption"]
-    return doc_task_name
-
-
-async def get_task_caption(access_token, refresh_token, user_id, doc_task_type, org_id, is_done):
-    task_type_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/routes/flowStageTypes"
-    headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    async with httpx.AsyncClient() as requests:
-        type_response = await requests.get(url=task_type_url, headers=headers)
-    while type_response.status_code != 200:
-        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
-        async with httpx.AsyncClient() as requests:
-            type_response = await requests.get(url=task_type_url, headers=headers)
-    types_response_json = type_response.json()
-
-    doc_task_name = ""
-    for type in types_response_json:
-        if type["type"] == doc_task_type:
-            if is_done:
-                doc_task_name = type["solvedCaption"]
-            else:
-                doc_task_name = type["declinedCaption"]
-    return doc_task_name
-
-
 async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, page):
     headers = {"Access-Token": f"{access_token}"}
 
-    page_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}/page/{page}"
-    async with httpx.AsyncClient() as requests:
-        page_response = await requests.get(url=page_url, headers=headers)
-    while page_response.status_code != 200:
-        headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
-        async with httpx.AsyncClient() as requests:
+    page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as requests:
             page_response = await requests.get(url=page_url, headers=headers)
-    len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
+        while page_response.status_code != 200:
+            headers = {"Access-Token": f"{await get_access(refresh_token=refresh_token, user_id=user_id)}"}
+            async with httpx.AsyncClient(timeout=10.0) as requests:
+                page_response = await requests.get(url=page_url, headers=headers)
+        len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
+    except:
+        len=0
     # документа, при этом её больше особо ниоткуда не вытащишь
     # *****************, я в шоке
 
-    doc_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}"
-    async with httpx.AsyncClient() as requests:
+    doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
+    async with httpx.AsyncClient(timeout=None) as requests:
         doc_response = await requests.get(url=doc_url, headers=headers)
     doc_response_json = doc_response.json()
 
@@ -300,9 +299,24 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
         doc_att_id = doc_response_json["documentAttachmentOguid"]
     except KeyError:
         doc_att_id = ""
-
-    task_name = await get_task_button(access_token=access_token, refresh_token=refresh_token, user_id=user_id,
-                                      doc_task_type=doc_task_type, org_id=org_id)
+    full_meta_response = (await Metadata.get_meta(user_id=user_id))
+    try:
+        response_types_list = full_meta_response["flowStageTypes"]
+    except:
+        response_types_list = {}
+    try:
+        full_doc_meta_response = full_meta_response["userTypes"]
+    except:
+        full_doc_meta_response = {}
+    # check_list = []
+    # for ttype in response_types_list:
+    #     check_list.append(ttype["type"])
+    # if task["document"]['flowStageType'] not in check_list:
+    #     await Metadata.update_meta(user_id=user_id, access_token=access_token)
+    task_name = ""
+    for button_type in response_types_list:
+        if button_type["type"] == doc_task_type:
+            task_name = button_type["buttonCaption"]
     try:
         if (doc_response_json["fields"]["sumTotal"] is not None) and (
                 doc_response_json["fields"]["currency"] is not None):
@@ -313,7 +327,7 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
     except:
         cost = ""
     try:
-        org__name = doc_response_json["fields"]["contractor"] + "\n"
+        org__name = doc_response_json["fields"]["contractor"]["nameShort"] + "\n"
     except:
         org__name = ""
     try:
@@ -332,37 +346,53 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
         doc_index = ""
     doc_name = ""
     other_fields = ""
-    try:
-        doc_key = str(doc_response_json["type"])
-        metaurl = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documentTypes/{doc_key}'
-        async with httpx.AsyncClient() as requests:
-            meta_response = await requests.get(url=metaurl, headers=headers)
-        try:
-            doc_name = meta_response.json()["titles"]["ru"]
-        except:
-            try:
-                doc_name = meta_response.json()["title"]
-            except:
-                doc_name = meta_response.json()["titles"]["en"]
 
+    doc_key = str(doc_response_json["type"])
+    if doc_key not in full_doc_meta_response.keys():
+        await Metadata.update_meta(user_id=user_id, access_token=access_token)
+        full_doc_meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+    meta_response = full_doc_meta_response[doc_key]
+    try:
+        doc_name = meta_response["titles"]["ru"]
+    except:
         try:
-            for field in meta_response.json()["fields"]:
-                if field["formProperties"]["form"]["visible"] and (
-                        field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-                                             "documentNumber"]):
-                    if doc_response_json["fields"][field["key"]] is not None:
-                        try:
-                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                doc_response_json["fields"][field["key"]]["value"])
-                        except:
-                            try:
-                                other_fields += field["component"]["label"] + ": " + str(
-                                    doc_response_json["fields"][field["key"]])
-                            except:
-                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                    doc_response_json["fields"][field["key"]]) + "\n"
+            doc_name = meta_response["title"]
         except:
-            pass
+            doc_name = meta_response["titles"]["en"]
+
+    try:
+        other_fields_list = []
+        for field in doc_response_json["fields"].keys():
+            if field not in meta_response["fields"].keys():
+                await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+            if meta_response["fields"][field]["formProperties"]["form"]["visible"] and not \
+                    meta_response["fields"][field]["isSystem"] and (
+                    field not in ["sumTotal", "currency", "contractor", "documentDate",
+                                  "documentNumber"]):
+                field_value = None
+                try:
+                    field_value = doc_response_json["fields"][field]["value"]
+                except:
+                    field_value = doc_response_json["fields"][field]
+
+                if field_value is not None:
+                    try:
+                        other_fields_list.append(
+                            [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                             meta_response["fields"][field]["component"]["labels"]["ru"] + ": " + str(field_value)])
+                    except:
+                        try:
+                            other_fields_list.append(
+                                [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                 meta_response["fields"][field]["component"]["label"] + ": " + str(field_value)])
+                        except:
+                            other_fields_list.append(
+                                [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                 meta_response["fields"][field]["component"]["labels"]["en"] + ": " + str(field_value)])
+        other_fields_list.sort()
+        for field, numb in zip(other_fields_list, range(3)):
+            other_fields += field[1]
     except:
         pass
     text = f"{doc_name} {doc_index}{data}{org__name}{cost}{other_fields}"
@@ -376,14 +406,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
 
 async def post_doc_action(access_token, refresh_token, org_id, task_id, action, user_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/flows/tasks/{task_id}/complete"
-    async with httpx.AsyncClient() as requests:
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/complete"
+    async with httpx.AsyncClient(timeout=None) as requests:
         action_response = await requests.post(url=url, headers=headers, json={"result": action})
 
     while (action_response.status_code == 400) or (action_response.status_code == 500):
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             action_response = await requests.post(url=url, headers=headers, json={"result": action})
 
     if action_response.status_code == 409:
@@ -393,14 +423,14 @@ async def post_doc_action(access_token, refresh_token, org_id, task_id, action, 
 
 async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    certif_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/users/{user_oguid}/certificate"
-    async with httpx.AsyncClient() as requests:
+    certif_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/certificate"
+    async with httpx.AsyncClient(timeout=None) as requests:
         certif_response = await requests.get(url=certif_url, headers=headers)
 
     while certif_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             certif_response = await requests.get(url=certif_url, headers=headers)
 
     try:
@@ -414,16 +444,16 @@ async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_
 
 async def post_hash(access_token, refresh_token, org_id, standard, att_doc_id, user_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    hash_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/attachments/hash"
+    hash_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/hash"
     data = {"standard": standard,
             "attachmentOguid": att_doc_id}
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         hash_response = await requests.post(url=hash_url, headers=headers, json=data)
     while hash_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             hash_response = await requests.post(url=hash_url, headers=headers, json=data)
     try:
         hash = hash_response.json()["hash"]
@@ -452,21 +482,21 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
         return "ERROR"
 
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    sign_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
+    sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
     sign_data = {"hash": hash}
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
 
     while action_response.status_code != 201:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
 
-    add_sign_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
+    add_sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
     add_sign_data = {"oguid": action_response.text[1:-1],
                      "comment": ""}
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         add_sign_response = await requests.post(url=add_sign_url, headers=headers, json=add_sign_data)
 
     print(add_sign_response)
@@ -475,7 +505,7 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
 
 async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_string=""):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documents"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
 
     if contained_string == "":
         params = {'perPage': 100}
@@ -483,22 +513,29 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         params = {"query.like": contained_string,
                   'perPage': 100, }
 
-    async with httpx.AsyncClient() as requests:
+    print("request")
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
+    print("response")
 
-    types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
-    types_url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/routes/flowStageTypes"
-    async with httpx.AsyncClient() as requests:
-        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
+    full_meta_response = (await Metadata.get_meta(user_id=user_id))
+    try:
+        response_types = full_meta_response["flowStageTypes"]
+    except:
+        response_types = {}
+    try:
+        full_doc_meta_response = full_meta_response["userTypes"]
+    except:
+        full_doc_meta_response = {}
 
     result = []
     resp_list = response.json()
-    response_types_list = response_types.json()
+    response_types_list = response_types
     for resp in resp_list:
         try:
             if (resp["fields"]["sumTotal"] is not None) and (resp["fields"]["currency"] is not None):
@@ -509,7 +546,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         except KeyError:
             cost = ""
         try:
-            org__name = resp["fields"]["contractor"] + "\n"
+            org__name = resp["fields"]["contractor"]["nameShort"] + "\n"
         except KeyError:
             org__name = ""
         try:
@@ -527,37 +564,57 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         except KeyError:
             doc_index = ""
         try:
-            doc_key = str(resp["type"])
-            metaurl = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            async with httpx.AsyncClient() as requests:
-                meta_response = await requests.get(url=metaurl, headers=headers)
-            try:
-                doc_name = meta_response.json()["titles"]["ru"]
-            except KeyError:
-                try:
-                    doc_name = meta_response.json()["title"]
-                except KeyError:
-                    doc_name = meta_response.json()["titles"]["en"]
             other_fields = ""
             try:
-                for field in meta_response.json()["fields"]:
-                    if field["formProperties"]["form"]["visible"] and (
-                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-                                                 "documentNumber"]):
-                        if resp["fields"][field["key"]] is not None:
-                            try:
-                                other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                    resp["fields"][field["key"]]["value"])
+                doc_key = str(resp["type"])
+                if doc_key not in full_doc_meta_response.keys():
+                    await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                    full_doc_meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+                meta_response = full_doc_meta_response[doc_key]
+                try:
+                    doc_name = meta_response["titles"]["ru"]
+                except:
+                    try:
+                        doc_name = meta_response["title"]
+                    except:
+                        doc_name = meta_response["titles"]["en"]
+                other_fields_list = []
+                try:
+                    for field in resp["fields"].keys():
+                        if field not in meta_response["fields"].keys():
+                            await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                            meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+                        if meta_response["fields"][field]["formProperties"]["form"]["visible"] and not \
+                                meta_response["fields"][field]["isSystem"] and (
+                                field not in ["sumTotal", "currency", "contractor", "documentDate",
+                                              "documentNumber"]):
 
+                            try:
+                                field_value = resp["fields"][field]["value"]
                             except:
+                                field_value = resp["fields"][field]
+                            if field_value is not None:
                                 try:
-                                    other_fields += field["component"]["label"] + ": " + str(
-                                        resp["fields"][field["key"]])
-                                except KeyError:
-                                    other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                        resp["fields"][field["key"]]) + "\n"
-                        else:
-                            pass
+                                    other_fields_list.append(
+                                        [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                         meta_response["fields"][field]["component"]["labels"]["ru"] + ": " + str(
+                                             field_value)])
+                                except:
+                                    try:
+                                        other_fields_list.append(
+                                            [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                             meta_response["fields"][field]["component"]["label"] + ": " + str(
+                                                 field_value)])
+                                    except:
+                                        other_fields_list.append(
+                                            [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                             meta_response["fields"][field]["component"]["labels"]["en"] + ": " + str(
+                                                 field_value)])
+                    other_fields_list.sort()
+                    for field, numb in zip(other_fields_list, range(3)):
+                        other_fields += field[1]
+                except:
+                    pass
             except KeyError:
                 pass
         except KeyError:
@@ -587,28 +644,31 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
 
 async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
     params = {'showMode': "TODOS_ONLY",
               'isCompleted': "false",
               "page": -1,
               "taskDirection": "TO_ME"}
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
 
-    types_headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json', "Accept-Language": "ru"}
-    types_url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/routes/flowStageTypes"
-    async with httpx.AsyncClient() as requests:
-        response_types = await requests.get(url=types_url, headers=types_headers, params=params)
-
-    response_types_list = response_types.json()
     tasks = response.json()
+    full_meta_response = (await Metadata.get_meta(user_id=user_id))
+    try:
+        response_types_list = full_meta_response["flowStageTypes"]
+    except:
+        response_types_list = {}
+    try:
+        full_doc_meta_response = full_meta_response["userTypes"]
+    except:
+        full_doc_meta_response = {}
 
     result = {}
     ctr = 0
@@ -622,7 +682,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             cost = ""
         try:
-            org__name = task["document"]["fields"]["contractor"] + "\n"
+            org__name = task["document"]["fields"]["contractor"]["nameShort"] + "\n"
         except:
             org__name = ""
         try:
@@ -640,33 +700,86 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
         except:
             doc_index = ""
         other_fields = ""
+        other_fields_list = []
         try:
             doc_key = str(task["document"]["type"])
-            meta_url = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documentTypes/{doc_key}'
-            async with httpx.AsyncClient() as requests:
-                meta_response = await requests.get(url=meta_url, headers=headers)
+            if doc_key not in full_doc_meta_response.keys():
+                await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                full_doc_meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+            meta_response = full_doc_meta_response[doc_key]
             try:
-                doc_name = meta_response.json()["titles"]["ru"]
+                doc_name = meta_response["titles"]["ru"]
             except:
                 try:
-                    doc_name = meta_response.json()["title"]
+                    doc_name = meta_response["title"]
                 except:
-                    doc_name = meta_response.json()["titles"]["en"]
-            other_fields = ""
+                    doc_name = meta_response["titles"]["en"]
+
             try:
-                for field in meta_response.json()["fields"]:
-                    if field["formProperties"]["form"]["visible"] and (
-                            field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
-                                                 "documentNumber"]):
+                for field in task["document"]["fields"].keys():
+                    if field not in meta_response["fields"].keys():
+                        await Metadata.update_meta(user_id=user_id, access_token=access_token)
+                        meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+                    if meta_response["fields"][field]["formProperties"]["form"]["visible"] and not \
+                            meta_response["fields"][field]["isSystem"] and (
+                            field not in ["sumTotal", "currency", "contractor", "documentDate",
+                                          "documentNumber"]):
+                        field_value = None
                         try:
-                            other_fields += field["component"]["label"] + ": " + str(
-                                task["document"]["fields"][field["key"]])
+                            field_value = task["document"]["fields"][field]["value"]
                         except:
-                            other_fields += field["component"]["labels"]["ru"] + ": " + str(
-                                task["document"]["fields"][field["key"]]) + "\n"
-                        print(other_fields)
+                            field_value = task["document"]["fields"][field]
+
+                        if field_value is not None:
+
+                            try:
+                                other_fields_list.append(
+                                    [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                     meta_response["fields"][field]["component"]["labels"]["ru"] + ": " + str(
+                                         field_value)])
+                            except:
+                                try:
+                                    other_fields_list.append(
+                                        [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                         meta_response["fields"][field]["component"]["label"] + ": " + str(
+                                             field_value)])
+                                except:
+                                    other_fields_list.append(
+                                        [meta_response["fields"][field]["formProperties"]["list"]["order"],
+                                         meta_response["fields"][field]["component"]["labels"]["en"] + ": " + str(
+                                             field_value)])
+                other_fields_list.sort()
+                for field, numb in zip(other_fields_list, range(3)):
+                    other_fields += field[1]
             except:
                 pass
+
+        #     doc_key = str(task["document"]["type"])
+        #     if doc_key not in meta_response.keys():
+        #         await Metadata.update_meta(user_id=user_id, access_token=access_token)
+        #         meta_response = (await Metadata.get_meta(user_id=user_id))["userTypes"]
+        #     meta_response = meta_response[doc_key]
+        #     try:
+        #         doc_name = meta_response["titles"]["ru"]
+        #     except:
+        #         try:
+        #             doc_name = meta_response["title"]
+        #         except:
+        #             doc_name = meta_response["titles"]["en"]
+        #     other_fields = ""
+        #     try:
+        #         for field in meta_response["fields"]:
+        #             if field["formProperties"]["form"]["visible"] and (
+        #                     field["key"] not in ["sumTotal", "currency", "contractor", "documentDate",
+        #                                          "documentNumber"]):
+        #                 try:
+        #                     other_fields += field["component"]["label"] + ": " + str(
+        #                         task["document"]["fields"][field["key"]])
+        #                 except:
+        #                     other_fields += field["component"]["labels"]["ru"] + ": " + str(
+        #                         task["document"]["fields"][field["key"]]) + "\n"
+        #     except:
+        #         pass
         except:
             doc_name = ""
         stage = "\n" + f"Статус: <b>Завершено</b>"
@@ -710,19 +823,19 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
 
 async def get_conversations_amount(access_token, refresh_token, user_id, org_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
 
     params = {'showMode': "TODOS_ONLY",
               'isCompleted': "false",
               "page": -1,
               "taskDirection": "TO_ME"}
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
 
     tasks = response.json()
@@ -731,14 +844,14 @@ async def get_conversations_amount(access_token, refresh_token, user_id, org_id)
 
 async def post_markasread(access_token, refresh_token, org_id, task_id, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/flows/tasks/{task_id}/markAsRead"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/markAsRead"
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, headers=headers)
     while response.status_code != 204:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.post(url=url, headers=headers)
 
     return "NOT CRINGE"
@@ -746,7 +859,7 @@ async def post_markasread(access_token, refresh_token, org_id, task_id, user_id)
 
 async def post_message_answer(access_token, refresh_token, org_id, entity_id, user_oguid, user_id, answer, task_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/flows/entities/{entity_id}/tasks"
+    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/entities/{entity_id}/tasks"
 
     json = {
         'assignedToUserOguid': user_oguid,
@@ -754,26 +867,26 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
         "parentTaskOguid": task_id
     }
 
-    async with httpx.AsyncClient() as requests:
+    async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, headers=headers, json=json)
     while response.status_code != 201:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.post(url=url, headers=headers, json=json)
     return "SUCCESS"
 
 
 async def get_file(access_token, refresh_token, org_id, doc_att_id, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    download_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/attachments/{doc_att_id}/file"
-    async with httpx.AsyncClient() as requests:
+    download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"
+    async with httpx.AsyncClient(timeout=None) as requests:
         download_response = await requests.get(url=download_url, headers=headers)
 
     while download_response.status_code != 200:
         access_token = await get_access(refresh_token=refresh_token, user_id=user_id)
         headers = {"Access-Token": f"{access_token}"}
-        async with httpx.AsyncClient() as requests:
+        async with httpx.AsyncClient(timeout=None) as requests:
             download_response = await requests.get(url=download_url, headers=headers)
 
     download_response_content = download_response.content

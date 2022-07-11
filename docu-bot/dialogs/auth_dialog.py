@@ -11,6 +11,7 @@ from bot import MyBot
 from database import ActiveUsers, Stats
 from .org_dialog import OrgSG
 from notifications import loop_notifications_instant, start_notifications
+from metadata import Metadata
 
 
 class AuthSG(StatesGroup):
@@ -53,6 +54,9 @@ async def password_handler(m: Message, dialog: Dialog, dialog_manager: DialogMan
         users = (await Stats.filter(id=0).values_list("users", flat=True))[0]
         await Stats.filter(id=0).update(users=users + 1)
 
+        access_token = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("access_token", flat=True))[0]
+        await Metadata.update_meta(user_id=m.from_user.id, access_token=access_token)
+
         await dialog_manager.start(OrgSG.choose_org)
     else:
         await MyBot.bot.send_message(m.from_user.id, "Неверный логин или пароль ❌\nПопробуйте еще раз!",
@@ -80,7 +84,20 @@ async def startbot(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        access_token = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("access_token", flat=True))[0]
+        await Metadata.update_meta(user_id=m.from_user.id, access_token=access_token)
         await MyBot.bot.send_message(m.from_user.id, "Вы успешно авторизовались! ✅", parse_mode="HTML")
 
 
+async def refreshmeta(m: Message, dialog_manager: DialogManager):
+    if not (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_id")):
+        await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
+        await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
+    else:
+        access_token = (await ActiveUsers.filter(user_id=m.from_user.id).values_list("access_token", flat=True))[0]
+        await Metadata.update_meta(user_id=m.from_user.id, access_token=access_token)
+        await MyBot.bot.send_message(m.from_user.id, "Метаданные обновлены! ✅", parse_mode="HTML")
+
+
 MyBot.register_handler(method=startbot, commands="start", state="*")
+MyBot.register_handler(method=refreshmeta, commands="refreshmeta", state="*")

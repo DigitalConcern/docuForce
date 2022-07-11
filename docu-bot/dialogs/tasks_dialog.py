@@ -8,7 +8,7 @@ from aiogram_dialog.manager.protocols import LaunchMode
 from aiogram_dialog.widgets.kbd import Button, Row
 from aiogram_dialog.widgets.text import Format
 
-from client import get_tasks_dict, post_doc_action, post_doc_sign, get_task_caption
+from client import get_tasks_dict, post_doc_action, post_doc_sign
 from database import ActiveUsers, Stats
 from bot import MyBot
 from dialogs.view_doc_dialog import ViewDocSG

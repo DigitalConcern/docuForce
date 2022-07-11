@@ -14,6 +14,7 @@ from dialogs.settings_dialog import settings_dialog
 from dialogs.list_doc_dialog import list_doc_dialog
 from dialogs.messages_dialog import messages_dialog
 import dialogs.menu_dialog
+import database
 from notifications import loop_notifications_8hrs, loop_notifications_instant, start_notifications
 
 

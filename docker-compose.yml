@@ -7,6 +7,14 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=dfbot_cache_db
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=1234
   web:
     build: ./docu-web
     ports:
@@ -25,8 +33,12 @@ services:
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - MONGO_NAME=metabd
+      - MONGO_USER=root
+      - MONGO_PASSWORD=1234
     depends_on:
       - db
+      - mongo
   nginx:
     build: ./nginx
     ports:

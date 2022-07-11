@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sleep 3
+
 echo "Migrate the Database at startup of project"
 
 python /wapp/source/manage.py makemigrations
