@@ -15,7 +15,7 @@ async def sign_in(login, password) -> (str, str):
         "email": login,
         "password": password
     }
-    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/signin"
+    url = "https://api.docuforce.infologistics.ru/signin"
 
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, json=data, headers=headers)
@@ -32,7 +32,7 @@ async def sign_in(login, password) -> (str, str):
 async def get_user_oguid(access_token, refresh_token, user_id) -> str:
     headers = {"Access-Token": f"{access_token}"}
 
-    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
+    url = "https://api.docuforce.infologistics.ru/user"
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers)
     user_oguid = response.json()["oguid"]
@@ -51,7 +51,7 @@ async def get_access(refresh_token, user_id) -> str:
     data = {
         "value": f"{refresh_token}",
     }
-    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/token-refresh"
+    url = "https://api.docuforce.infologistics.ru/token-refresh"
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, json=data, headers=headers)
 
@@ -67,7 +67,7 @@ async def get_access(refresh_token, user_id) -> str:
 
 async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
     headers = {"Access-Token": f"{access_token}"}
-    url = "https://im-api.df-backend-dev.dev.info-logistics.eu/user"
+    url = "https://api.docuforce.infologistics.ru/user"
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers)
 
@@ -88,7 +88,7 @@ async def get_orgs_dict(access_token, refresh_token, user_id) -> dict:
 
 async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
 
     params = {
         'showMode': "NEED_TO_ACTION",
@@ -239,7 +239,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
                             button,
                             task["task"]["type"],
                             task["task"]["oguid"],
-                            task["document"]["documentAttachmentOguid"],
+                            task["document"]["documentAttachmentOguid"]
 
                             )  # Найти какие данные нужно вытащить из тасков
         ctr += 1
@@ -248,7 +248,7 @@ async def get_tasks_dict(access_token, refresh_token, user_id, org_id) -> dict:
 
 async def get_tasks_amount(access_token, refresh_token, user_id, org_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
 
     params = {
         'showMode': "NEED_TO_ACTION",
@@ -269,7 +269,7 @@ async def get_tasks_amount(access_token, refresh_token, user_id, org_id):
 async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, page):
     headers = {"Access-Token": f"{access_token}"}
 
-    page_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/page/{page}"
+    page_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}/page/{page}"
     try:
         async with httpx.AsyncClient(timeout=10.0) as requests:
             page_response = await requests.get(url=page_url, headers=headers)
@@ -279,15 +279,14 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
                 page_response = await requests.get(url=page_url, headers=headers)
         len = page_response.headers.get("X-Total-Pages")  # Этот ******* запрос теперь нужен только чтобы узнать длинну
     except:
-        len=0
+        len = 0
     # документа, при этом её больше особо ниоткуда не вытащишь
     # *****************, я в шоке
 
-    doc_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}"
+    doc_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}"
     async with httpx.AsyncClient(timeout=None) as requests:
         doc_response = await requests.get(url=doc_url, headers=headers)
     doc_response_json = doc_response.json()
-
     try:
         doc_task_id = doc_response_json["tasks"][0]["oguid"]
         doc_task_type = doc_response_json["tasks"][0]["type"]
@@ -401,12 +400,13 @@ async def get_doc_dict(access_token, refresh_token, org_id, doc_id, user_id, pag
             "task_type": task_name,
             "task_type_service": doc_task_type,
             "doc_att_id": doc_att_id,
-            "text": text}
+            "text": text,
+            }
 
 
 async def post_doc_action(access_token, refresh_token, org_id, task_id, action, user_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/complete"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/flows/tasks/{task_id}/complete"
     async with httpx.AsyncClient(timeout=None) as requests:
         action_response = await requests.post(url=url, headers=headers, json={"result": action})
 
@@ -423,7 +423,7 @@ async def post_doc_action(access_token, refresh_token, org_id, task_id, action, 
 
 async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    certif_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/certificate"
+    certif_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/users/{user_oguid}/certificate"
     async with httpx.AsyncClient(timeout=None) as requests:
         certif_response = await requests.get(url=certif_url, headers=headers)
 
@@ -444,7 +444,7 @@ async def get_certificate(access_token, refresh_token, org_id, user_oguid, user_
 
 async def post_hash(access_token, refresh_token, org_id, standard, att_doc_id, user_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    hash_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/hash"
+    hash_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/attachments/hash"
     data = {"standard": standard,
             "attachmentOguid": att_doc_id}
 
@@ -482,7 +482,7 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
         return "ERROR"
 
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
+    sign_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/users/{user_oguid}/docuForceCertificate/{certif_id}/sign"
     sign_data = {"hash": hash}
     async with httpx.AsyncClient(timeout=None) as requests:
         action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
@@ -493,7 +493,7 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
         async with httpx.AsyncClient(timeout=None) as requests:
             action_response = await requests.post(url=sign_url, headers=headers, json=sign_data)
 
-    add_sign_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
+    add_sign_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{doc_id}/attachments/signatures"
     add_sign_data = {"oguid": action_response.text[1:-1],
                      "comment": ""}
     async with httpx.AsyncClient(timeout=None) as requests:
@@ -505,7 +505,7 @@ async def post_doc_sign(access_token, refresh_token, org_id, user_oguid, user_id
 
 async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_string=""):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documents"
 
     if contained_string == "":
         params = {'perPage': 100}
@@ -513,7 +513,6 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         params = {"query.like": contained_string,
                   'perPage': 100, }
 
-    print("request")
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.get(url=url, headers=headers, params=params)
     while response.status_code != 200:
@@ -521,7 +520,6 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
         headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
         async with httpx.AsyncClient(timeout=None) as requests:
             response = await requests.get(url=url, headers=headers, params=params)
-    print("response")
 
     full_meta_response = (await Metadata.get_meta(user_id=user_id))
     try:
@@ -543,11 +541,11 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                     resp["fields"]["currency"]) + "\n"
             else:
                 cost = ""
-        except KeyError:
+        except:
             cost = ""
         try:
             org__name = resp["fields"]["contractor"]["nameShort"] + "\n"
-        except KeyError:
+        except:
             org__name = ""
         try:
             data = " от " + datetime.datetime.fromtimestamp(
@@ -612,7 +610,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
                                                  field_value)])
                     other_fields_list.sort()
                     for field, numb in zip(other_fields_list, range(3)):
-                        other_fields += field[1]
+                        other_fields += field[1]+"\n"
                 except:
                     pass
             except KeyError:
@@ -644,7 +642,7 @@ async def get_doc_list(access_token, refresh_token, org_id, user_id, contained_s
 
 async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -> dict:
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
 
     params = {'showMode': "TODOS_ONLY",
               'isCompleted': "false",
@@ -823,7 +821,7 @@ async def get_conversations_dict(access_token, refresh_token, user_id, org_id) -
 
 async def get_conversations_amount(access_token, refresh_token, user_id, org_id):
     headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/flows/tasks"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/flows/tasks"
 
     params = {'showMode': "TODOS_ONLY",
               'isCompleted': "false",
@@ -844,7 +842,7 @@ async def get_conversations_amount(access_token, refresh_token, user_id, org_id)
 
 async def post_markasread(access_token, refresh_token, org_id, task_id, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/tasks/{task_id}/markAsRead"
+    url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/flows/tasks/{task_id}/markAsRead"
 
     async with httpx.AsyncClient(timeout=None) as requests:
         response = await requests.post(url=url, headers=headers)
@@ -859,7 +857,7 @@ async def post_markasread(access_token, refresh_token, org_id, task_id, user_id)
 
 async def post_message_answer(access_token, refresh_token, org_id, entity_id, user_oguid, user_id, answer, task_id):
     headers = {"Access-Token": f"{access_token}", 'content-type': 'application/json'}
-    url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/flows/entities/{entity_id}/tasks"
+    url = f"https:///orgs/{org_id}/flows/entities/{entity_id}/tasks"
 
     json = {
         'assignedToUserOguid': user_oguid,
@@ -879,7 +877,7 @@ async def post_message_answer(access_token, refresh_token, org_id, entity_id, us
 
 async def get_file(access_token, refresh_token, org_id, doc_att_id, user_id):
     headers = {"Access-Token": f"{access_token}"}
-    download_url = f"https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/attachments/{doc_att_id}/file"
+    download_url = f"https://api.docuforce.infologistics.ru/orgs/{org_id}/attachments/{doc_att_id}/file"
     async with httpx.AsyncClient(timeout=None) as requests:
         download_response = await requests.get(url=download_url, headers=headers)
 

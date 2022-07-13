@@ -3,7 +3,7 @@ import asyncio
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ParseMode
 
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, Window, StartMode, ShowMode
 from aiogram_dialog.manager.protocols import LaunchMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Row, SwitchTo
@@ -21,12 +21,10 @@ class MessagesSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-    # wait_msg_id = (
-    #     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     data = list(
         await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token",
-                                                                                        "organization","new_convs"))[0]
-    refresh_token, access_token, organization, curr_convs = data[0], data[1], data[2],data[3]
+                                                                                        "organization", "new_convs"))[0]
+    refresh_token, access_token, organization, curr_convs = data[0], data[1], data[2], data[3]
 
     dialog_manager.current_context().dialog_data[
         "conversations_dict"] = dialog_manager.current_context().dialog_data.get(
@@ -124,23 +122,29 @@ async def switch_pages(c: CallbackQuery, button: Button, dialog_manager: DialogM
                 dialog_manager.current_context().dialog_data["text"][
                     dialog_manager.current_context().dialog_data["counter"]]
 
-            if dialog_manager.current_context().dialog_data["counter"] + 1 == dialog_manager.current_context().dialog_data["len"]:
+            if dialog_manager.current_context().dialog_data["counter"] + 1 == \
+                    dialog_manager.current_context().dialog_data["len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = False
 
             if dialog_manager.current_context().dialog_data["counter"] > 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = True
         case "minus":
             dialog_manager.current_context().dialog_data["counter"] -= 1
-            dialog_manager.current_context().dialog_data["current_page"] = dialog_manager.current_context().dialog_data["text"][dialog_manager.current_context().dialog_data["counter"]]
+            dialog_manager.current_context().dialog_data["current_page"] = \
+            dialog_manager.current_context().dialog_data["text"][
+                dialog_manager.current_context().dialog_data["counter"]]
             if dialog_manager.current_context().dialog_data["counter"] == 0:
                 dialog_manager.current_context().dialog_data["is_not_first"] = False
-            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data["len"]:
+            if dialog_manager.current_context().dialog_data["counter"] < dialog_manager.current_context().dialog_data[
+                "len"]:
                 dialog_manager.current_context().dialog_data["is_not_last"] = True
         case "first":
             dialog_manager.current_context().dialog_data["counter"] = 0
             dialog_manager.current_context().dialog_data["is_not_last"] = True
             dialog_manager.current_context().dialog_data["is_not_first"] = False
-            dialog_manager.current_context().dialog_data["current_page"] = dialog_manager.current_context().dialog_data["text"][dialog_manager.current_context().dialog_data["counter"]]
+            dialog_manager.current_context().dialog_data["current_page"] = \
+            dialog_manager.current_context().dialog_data["text"][
+                dialog_manager.current_context().dialog_data["counter"]]
         case "fin":
             dialog_manager.current_context().dialog_data["counter"] = dialog_manager.current_context().dialog_data[
                                                                           "len"] - 1
@@ -173,19 +177,18 @@ async def answer_message(m: Message, dialog: Dialog, dialog_manager: DialogManag
         user_id=m.from_user.id)
 
     await MyBot.bot.send_message(m.from_user.id,
-                                 f"Сообщение:\n<i>{m.text}</i>\nДля пользователя {dialog_manager.current_context().dialog_data['current_author_for_resp']}\nОтправлено!", parse_mode=ParseMode.HTML)
+                                 f"Сообщение:\n<i>{m.text}</i>\nДля пользователя {dialog_manager.current_context().dialog_data['current_author_for_resp']}\nОтправлено!",
+                                 parse_mode=ParseMode.HTML)
 
     messages_done = (await Stats.filter(id=0).values_list("messages_done", flat=True))[0]
     await Stats.filter(id=0).update(messages_done=messages_done + 1)
 
-    convs_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount", flat=True))[0]
+    convs_amount = (
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount",
+                                                                                        flat=True))[0]
     await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(conversations_amount=convs_amount - 1)
 
-    await dialog_manager.done()
-
-    await asyncio.sleep(1)
-
-    await dialog_manager.start(MessagesSG.choose_action)
+    await dialog_manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK, show_mode=ShowMode.SEND)
 
 
 async def close_msg(m: Message, dialog: Dialog, dialog_manager: DialogManager):
@@ -208,14 +211,12 @@ async def close_msg(m: Message, dialog: Dialog, dialog_manager: DialogManager):
     messages_done = (await Stats.filter(id=0).values_list("messages_done", flat=True))[0]
     await Stats.filter(id=0).update(messages_done=messages_done + 1)
 
-    convs_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount", flat=True))[0]
+    convs_amount = (
+        await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("conversations_amount",
+                                                                                        flat=True))[0]
     await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(conversations_amount=convs_amount - 1)
 
-    await dialog_manager.done()
-
-    await asyncio.sleep(1)
-
-    await dialog_manager.start(MessagesSG.choose_action)
+    await dialog_manager.start(MessagesSG.choose_action, mode=StartMode.RESET_STACK, show_mode=ShowMode.SEND)
 
 
 async def go_to_doc(c: CallbackQuery, button: Button, dialog_manager: DialogManager):

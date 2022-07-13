@@ -184,7 +184,7 @@ async def msg_instant(user_id: int, manager: BaseDialogManager):
                 await ActiveUsers.filter(user_id=user_id).update(new_tasks=diff_tasks)
                 await manager.start(TasksSG.choose_action, mode=StartMode.NEW_STACK)
 
-            await asyncio.sleep(2 * 60)
+            await asyncio.sleep(60)
     except asyncio.CancelledError:
         raise
 

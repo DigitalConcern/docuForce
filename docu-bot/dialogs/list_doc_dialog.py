@@ -45,7 +45,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
     text = []
     doc_ids = []
     for doc in doc_list:
-        micro_text = f"{doc[7]}<i>{doc[1]}{doc[4]} {doc[3]} {doc[2]}{doc[0]}{doc[6]}</i>"
+        micro_text = f"{doc[7]}<i>{doc[1]}{doc[4]} {doc[3]}{doc[2]}{doc[0]}\n{doc[6]}</i>"
         text.append(micro_text)
         doc_ids.append(doc[5])
 
@@ -157,7 +157,7 @@ async def search_handler(m: Message, dialog: Dialog, dialog_manager: DialogManag
 list_doc_dialog = Dialog(
     Window(
         DynamicMedia(
-            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{current_doc_id}/page/1",
+            url="https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{current_doc_id}/page/1",
             url_headers="{access_token}",
             when='have_documents',
             type=ContentType.PHOTO

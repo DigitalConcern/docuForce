@@ -10,6 +10,8 @@ from bot import MyBot
 from client import get_orgs_dict
 from database import ActiveUsers
 from metadata import Metadata
+from notifications import kill_task, start_notifications
+
 
 class OrgSG(StatesGroup):
     choose_org = State()
@@ -18,7 +20,8 @@ class OrgSG(StatesGroup):
 async def get_data(dialog_manager: DialogManager, **kwargs):
     wait_msg_id = (
         await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
-    data = list(await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token", "access_token"))[0]
+    data = list(await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("refresh_token",
+                                                                                                "access_token"))[0]
     refresh_token, access_token = data[0], data[1]
 
     orgs_dict = await get_orgs_dict(access_token=access_token,
@@ -48,7 +51,11 @@ async def on_org_clicked(c: CallbackQuery, select: Select, dialog_manager: Dialo
 
     await MyBot.bot.send_message(c.from_user.id, f"Организация\n{org_name}\nуспешно выбрана!")
     await MyBot.bot.send_message(c.from_user.id, f"Теперь Вы можете использовать любую команду из меню!")
-    await dialog_manager.done()
+
+    await dialog_manager.reset_stack(remove_keyboard=True)
+    await kill_task(c.from_user.id)
+    await start_notifications(user_id=c.from_user.id, manager=dialog_manager.bg())
+
 
 org_dialog = Dialog(
     Window(

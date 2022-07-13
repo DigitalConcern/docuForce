@@ -20,27 +20,29 @@ class SettingsSG(StatesGroup):
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
-    # wait_msg_id = (
-    #     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text="Загрузка...")).message_id
     radio = dialog_manager.dialog().find("notifications")
-    #
-    # await MyBot.bot.delete_message(chat_id=dialog_manager.event.from_user.id, message_id=wait_msg_id)
 
     if not radio.is_checked(item_id="0") and not radio.is_checked(item_id="1") and not radio.is_checked(item_id="2"):
-        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification",
-                                                                                            flat=True))[0]:
+        data = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("eight_hour_notification", "instant_notification", "not_notification"))[0]
+
+        eight_hour_notification, instant_notification, not_notification = data[0], data[1], data[2]
+
+        if eight_hour_notification:
             await radio.set_checked(item_id="0", event=dialog_manager.event)
 
-        if (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("instant_notification",
-                                                                                            flat=True))[0]:
+        if instant_notification:
             await radio.set_checked(item_id="1", event=dialog_manager.event)
 
-        if not ((await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("instant_notification",
-                                                                                                 flat=True))[0]) and not \
-                ((await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list(
-                    "eight_hour_notification",
-                    flat=True))[0]):
+        if not_notification:
             await radio.set_checked(item_id="2", event=dialog_manager.event)
+
+    mode = [
+        ("Несколько раз в сутки", "0"),
+        ("Обо всех задачах и сообщениях", "1"),
+        ("Отключить", "2")
+    ]
+
+    return {"mode": mode}
 
 
 async def state_changed(event: ChatEvent, radio: Radio, manager: DialogManager, item_id: str):
@@ -84,11 +86,7 @@ settings_dialog = Dialog(
                 Format("⚪️ {item[0]}"),
                 id="notifications",
                 item_id_getter=operator.itemgetter(1),
-                items=[
-                    ("Несколько раз в сутки", 0),
-                    ("Обо всех задачах и сообщениях", 1),
-                    ("Отключить", 2)
-                ],
+                items="mode",
                 on_state_changed=state_changed,
             )
         ),

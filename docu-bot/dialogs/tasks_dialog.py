@@ -3,7 +3,7 @@ import asyncio
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import CallbackQuery, ParseMode
 
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, Window, StartMode, ShowMode
 from aiogram_dialog.manager.protocols import LaunchMode
 from aiogram_dialog.widgets.kbd import Button, Row
 from aiogram_dialog.widgets.text import Format
@@ -238,14 +238,11 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     tasks_done = (await Stats.filter(id=0).values_list("tasks_done", flat=True))[0]
     await Stats.filter(id=0).update(tasks_done=tasks_done + 1)
 
-    tasks_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("tasks_amount", flat=True))[0]
+    tasks_amount = \
+        (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("tasks_amount", flat=True))[0]
     await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(tasks_amount=tasks_amount - 1)
 
-    await dialog_manager.done()
-
-    await asyncio.sleep(1)
-
-    await dialog_manager.start(TasksSG.choose_action)
+    await dialog_manager.start(TasksSG.choose_action, mode=StartMode.RESET_STACK, show_mode=ShowMode.SEND)
 
 
 class TasksSG(StatesGroup):

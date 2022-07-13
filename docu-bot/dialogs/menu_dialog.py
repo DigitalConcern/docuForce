@@ -74,6 +74,9 @@ async def settings(m: Message, dialog_manager: DialogManager):
         await MyBot.bot.send_message(m.from_user.id, "Здравствуйте!\nПройдите авторизацию!", parse_mode="HTML")
         await dialog_manager.start(AuthSG.login, mode=StartMode.RESET_STACK)
     else:
+        await get_access(
+            refresh_token=(await ActiveUsers.filter(user_id=m.from_user.id).values_list("refresh_token"))[0],
+            user_id=m.from_user.id)
         if not await is_task_active(m.from_user.id):
             await start_notifications(user_id=m.from_user.id, manager=dialog_manager.bg())
 

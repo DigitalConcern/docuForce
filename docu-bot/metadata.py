@@ -14,12 +14,12 @@ class Metadata:
 
     @classmethod
     async def update_meta(cls, user_id: int, access_token):
-        print("Meta DB updated")
+        # print("Meta DB updated")
         data = (await ActiveUsers.filter(user_id=user_id).values_list("organization"))[0]
         org_id = data[0]
 
-        meta_url_user = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/documents/userTypes'
-        meta_url_flow = f'https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{str(org_id)}/routes/flowStageTypes'
+        meta_url_user = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/documents/userTypes'
+        meta_url_flow = f'https://api.docuforce.infologistics.ru/orgs/{str(org_id)}/routes/flowStageTypes'
 
         headers = {"Access-Token": f"{access_token}", "Accept-Language": "ru"}
 
@@ -49,7 +49,7 @@ class Metadata:
 
     @classmethod
     async def get_meta(cls, user_id: int):
-        print("Got data from DB")
+        # print("Got data from DB")
         return await cls.db.collection.find_one({'_id': user_id})
 
 

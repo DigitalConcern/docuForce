@@ -171,10 +171,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
                 msg_text += "Вы отказали в обработке"
             if dialog_manager.current_context().dialog_data["task_type_service"] == "CONFIRMATION":
                 msg_text += "Вы отказали в утверждении"
-            # msg_text += await get_task_caption(access_token=access_token, refresh_token=refresh_token,
-            #                                    user_id=dialog_manager.event.from_user.id,
-            #                                    doc_task_type=dialog_manager.current_context().dialog_data[
-            #                                        'task_type_service'], org_id=organization, is_done=False)
+
     msg_text += "\n<i>" + dialog_manager.current_context().dialog_data["text"] + "</i>"
     await MyBot.bot.send_message(chat_id=dialog_manager.event.from_user.id, text=msg_text,parse_mode=ParseMode.HTML)
 
@@ -184,7 +181,7 @@ async def do_task(c: CallbackQuery, button: Button, dialog_manager: DialogManage
     tasks_amount = (await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).values_list("tasks_amount", flat=True))[0]
     await ActiveUsers.filter(user_id=dialog_manager.event.from_user.id).update(tasks_amount=tasks_amount - 1)
 
-    await dialog_manager.done()
+    await dialog_manager.reset_stack(remove_keyboard=True)
 
 
 async def download_file(c: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -203,7 +200,7 @@ async def download_file(c: CallbackQuery, button: Button, dialog_manager: Dialog
 view_doc_dialog = Dialog(
     Window(
         DynamicMedia(
-            url="https://im-api.df-backend-dev.dev.info-logistics.eu/orgs/{org_id}/documents/{"
+            url="https://api.docuforce.infologistics.ru/orgs/{org_id}/documents/{"
                 "current_document_id}/page/{counter}",
             url_headers="{access_token}",
             type=ContentType.PHOTO
